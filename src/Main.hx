@@ -17,7 +17,7 @@ class Animate extends Behavior {
 	var frames:Int;
 	var speed:Float;
 	var time:Float = 0;
-	var sprite:String;
+	public var sprite:String;
 	var remove:Bool;
 	public function new (entity, sprite, speed, remove:Bool = false) {
 		super(entity);
@@ -142,44 +142,52 @@ class Entity {
   	this.behaviors.push(behavior);
   	//trace('added behavior ${behavior}');
   }
+  public function remove_behavior (behavior) {
+  	this.behaviors.remove(behavior);
+  }
 }
 
 class Main {
   var entities = new Array();
+  var enemies = new Array();
   var player:Entity;
   var velocity:Velocity;
+  var animate:Animate;
+  var mana:Float;
+  var locked:Bool;
   var st:Float = 0; // for some reason Core.time here or in init() doesn't run in time to be valid for update(), so I set it to 0
   function init(){
     //this.titles = [];
-    Layer.create("fg");
-    Layer.attach("fg");
+    //Layer.create("fg");
+    //Layer.attach("fg");    
+
+    //Layer.create("ui");
+    //Layer.attach("ui");
 
     Gfx.loadtiles("asteroid", 15, 15);
     Gfx.loadtiles("bug", 18, 34);
-    Gfx.loadtiles("suit", 16, 17);
+    Gfx.loadtiles("jump", 16, 17);
+    Gfx.loadtiles("turn", 16, 17);
     Gfx.loadtiles("dust", 8, 8);
     Gfx.loadtiles("building", 32, 32);
     Gfx.loadtiles("ground", 64, 13);
 		Gfx.clearcolor = Col.BLACK;
 
 		Sound.load("jump");
+		Sound.load("powerup");
+		Sound.load("blink");
 
-		Core.showstats = true;
+		//Core.showstats = true;
+		this.locked = false;
+		this.mana = 100;
 
-    this.player = new Entity(100, 0);
-    new Animate(this.player, "suit", 0.4);
-    this.velocity = new Velocity(this.player, 0, -40);
-    new Wrap(this.player, 0, 0, Gfx.screenwidth, Gfx.screenheight);
-    // NOTE: this causes crash when out of focus for 2 cycles (I think!)
-    /*new Periodic(this.player, 1, function () { 
-    	var d = new Entity(this.player.x + 4, this.player.y + 4);
-    	new Animate(d, "dust", 0.2, true);
-    	this.entities.unshift(d);
-    	Sound.play("jump");
-    });*/
+    this.player = new Entity(100, 100);
+    this.animate = new Animate(this.player, "jump", 0.4);
+    this.velocity = new Velocity(this.player, 0, 0);
+    new Wrap(this.player, 0, -100, Gfx.screenwidth, Gfx.screenheight + 100);
     this.entities.push(this.player);
 
-    for (i in [0,1,2,3,4]) {
+    for (i in 0...6) {
 	    var ground = new Entity(i * 64, Gfx.screenheight - 6);
 	    new Animate(ground, "ground", 1);
 
@@ -205,40 +213,80 @@ class Main {
     for (entity in this.entities) {
       entity.draw();
       entity.update(dt);
+    }
 
+    for (entity in this.entities) {
       if (!entity.alive) {
         this.entities.remove(entity);
       }
     }
 
-    Filter.vcr = true;
     //Filter.blur = 2;
+		//Gfx.clearcolor = Col.TRANSPARENT;
+    //Layer.drawto("ui");
+    //Filter.vcr = true;
 
-    if(Gui.button("SPIN")){
-      //Layer.rotate("fg", Layer.getrotation("fg") + 1, Gfx.CENTER, Gfx.CENTER);
-      /*
-      var asteroid = new Entity(100, 0);
-      new Animate(asteroid, "asteroid", 0.1);
-      new Velocity(asteroid, 0, 30);
-	    new Crop(asteroid, 0, 0, Gfx.screenwidth, Gfx.screenheight);
-	    this.entities.push(asteroid);
-	    */
+    if(Gui.button("Spawn")){
+    	for (i in 0...10) {    		
+	    	var e = new Entity(Random.int(0, Gfx.screenwidth), 1);
+	    	new Animate(e, "asteroid", 1);
+	    	new Velocity(e, Random.int(-50, 50), 50);
+	    	new Crop(e, 0, 0, Gfx.screenwidth, Gfx.screenheight);
+	    	this.entities.push(e);
+	    	this.enemies.push(e);
+    	}
     }
-
+    Gui.text('MP: ${Math.round(this.mana)} !!!');
+    
     this.velocity.y = Math.min(100, this.velocity.y + 100 * dt);
+    this.mana = Math.min(100, this.mana + 5 * dt);
+    if (!this.locked) {
+	    if (this.velocity.x != 0) {
+	    	this.velocity.x = Math.round(this.velocity.x - this.velocity.x * dt);
+	    }
 
-    if (Input.justpressed(Key.UP)) {
-    	var d = new Entity(this.player.x + 4, this.player.y + 4);
-    	new Animate(d, "dust", 0.2, true);
-    	this.entities.unshift(d);
-    	Sound.play("jump");
+	    if (Input.justpressed(Key.UP)) {
+	    	var d = new Entity(this.player.x + 4, this.player.y + 4);
+	    	new Animate(d, "dust", 0.2, true);
+	    	this.entities.unshift(d);
+	    	Sound.play("jump");
 
-    	this.velocity.y = -100;
+	    	this.velocity.y = -100;
+	    }
+	    if (this.mana > 30) {
+		    if (Input.justpressed(Key.RIGHT)) {
+		    	Sound.play("powerup");
+		    	//this.velocity.y = 0;
+		    	this.locked = true;
+		    	Core.delaycall(function () {
+			    	this.velocity.x = 100;
+			    	this.locked = false;
+			    	Sound.play("blink");
+		    	}, 1.0);
+		    	this.mana -= 30;
+		    } else if (Input.justpressed(Key.LEFT)) {
+		    	Sound.play("powerup");
+		    	//this.velocity.y = 0;
+		    	this.locked = true;
+		    	Core.delaycall(function () {
+			    	this.velocity.x = -100;
+			    	this.locked = false;
+			    	Sound.play("blink");
+		    	}, 1.0);
+		    	this.mana -= 30;
+		    }
+	    }
     }
 
-    Gui.text("HP: <3 " + 10);
-    //Gui.button("mute");
-    //Gui.button("HELLO");
+    for (enemy in this.enemies) {
+    	if (Geom.overlap(this.player.x, this.player.y, 16, 16, enemy.x, enemy.y, 16, 16)) {
+    		this.player.alive = false;
+    	}
+    }
+
+    if (this.player.y > Gfx.screenheight - 12) {
+    	this.player.alive = false;
+    }
   }
 }
 
