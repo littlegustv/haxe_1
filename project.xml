@@ -22,7 +22,7 @@
 	 
 	<window
       fps="60"
-      background="0x000000"
+      background="0xFFFFFF"
       orientation="landscape"
       hardware="true"
       vsync="true"
