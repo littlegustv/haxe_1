@@ -12,6 +12,33 @@ class Behavior {
 	}
 }
 
+class Beam extends Behavior {
+	var time:Float;
+	var interval:Float;
+	var callback:Void->Void;
+	var direction:Int;
+	public function new (entity, interval, direction, callback) {
+		super(entity);
+		this.time = 0;
+		this.direction = direction;
+		this.interval = interval;
+		this.callback = callback;
+	}
+	public override function update(dt) {
+		this.time += dt;
+		if (this.time > this.interval) {
+			this.callback();
+			this.entity.remove_behavior(this);
+		}
+	}
+	public override function draw () {
+		var h:Float = 16 * this.time / this.interval;
+		var x = this.direction * Gfx.screenwidth + this.entity.x + 8;
+		var y = this.entity.y + 8 - h / 2;
+		Gfx.fillbox(x, y, Gfx.screenwidth, h, Col.WHITE, this.time / this.interval);
+	}
+}
+
 class Animate extends Behavior {
 	var frame:Int = 0;
 	var frames:Int;
@@ -139,7 +166,7 @@ class Entity {
     //Gfx.drawtile(this.x, this.y, "bug", 1);
   }
   public function add_behavior (behavior) {
-  	this.behaviors.push(behavior);
+  	this.behaviors.unshift(behavior);
   	//trace('added behavior ${behavior}');
   }
   public function remove_behavior (behavior) {
@@ -155,6 +182,7 @@ class Main {
   var animate:Animate;
   var mana:Float;
   var locked:Bool;
+  var points:Int;
   var st:Float = 0; // for some reason Core.time here or in init() doesn't run in time to be valid for update(), so I set it to 0
   function init(){
     //this.titles = [];
@@ -176,10 +204,12 @@ class Main {
 		Sound.load("jump");
 		Sound.load("powerup");
 		Sound.load("blink");
+		Sound.load("denied");
 
 		//Core.showstats = true;
 		this.locked = false;
 		this.mana = 100;
+		this.points = 0;
 
     this.player = new Entity(100, 100);
     this.animate = new Animate(this.player, "jump", 0.4);
@@ -198,8 +228,6 @@ class Main {
     }
 
     Music.play("soundtrack");
-		//Gfx.resizescreen(0, 0);
-  	//Gui.setfont("default", 5);
   }
  
   function update() {
@@ -207,8 +235,7 @@ class Main {
     var dt:Float = Math.min(nt - this.st, 1.0 / 30); // cap at 30 frames per second ... what will this do, I wonder?
     this.st = nt;
 
-    Layer.drawto("fg");
-    //Layer.move("bg", this.player.x, this.player.y);
+    //Layer.drawto("fg");
 
     for (entity in this.entities) {
       entity.draw();
@@ -218,14 +245,20 @@ class Main {
     for (entity in this.entities) {
       if (!entity.alive) {
         this.entities.remove(entity);
+        this.enemies.remove(entity);
       }
     }
+    // remove from enemies (collision) list as well
 
-    //Filter.blur = 2;
-		//Gfx.clearcolor = Col.TRANSPARENT;
-    //Layer.drawto("ui");
-    //Filter.vcr = true;
-
+    if (Random.chance(2)) {
+    	var e = new Entity(Random.int(0, Gfx.screenwidth), 1);
+    	new Animate(e, "asteroid", 1);
+    	new Velocity(e, Random.int(-50, 50), 50);
+    	new Crop(e, 0, 0, Gfx.screenwidth, Gfx.screenheight);
+    	this.entities.push(e);
+    	this.enemies.push(e);
+    }
+    /*
     if(Gui.button("Spawn")){
     	for (i in 0...10) {    		
 	    	var e = new Entity(Random.int(0, Gfx.screenwidth), 1);
@@ -235,12 +268,13 @@ class Main {
 	    	this.entities.push(e);
 	    	this.enemies.push(e);
     	}
-    }
+    }*/
     Gui.text('MP: ${Math.round(this.mana)} !!!');
+    Gui.text('Points: ${this.points}.');
     
-    this.velocity.y = Math.min(100, this.velocity.y + 100 * dt);
     this.mana = Math.min(100, this.mana + 5 * dt);
     if (!this.locked) {
+	    this.velocity.y = Math.min(100, this.velocity.y + 100 * dt);
 	    if (this.velocity.x != 0) {
 	    	this.velocity.x = Math.round(this.velocity.x - this.velocity.x * dt);
 	    }
@@ -253,39 +287,59 @@ class Main {
 
 	    	this.velocity.y = -100;
 	    }
-	    if (this.mana > 30) {
-		    if (Input.justpressed(Key.RIGHT)) {
+	    if (Input.justpressed(Key.LEFT)) {
+		    if (this.mana > 30) {
 		    	Sound.play("powerup");
-		    	//this.velocity.y = 0;
 		    	this.locked = true;
-		    	Core.delaycall(function () {
+			    new Beam(this.player, 0.75, -1, function () {
 			    	this.velocity.x = 100;
 			    	this.locked = false;
 			    	Sound.play("blink");
-		    	}, 1.0);
+			    	for (enemy in this.enemies) {
+				    	if (Geom.overlap(this.player.x - Gfx.screenwidth, this.player.y, Gfx.screenwidth, 16, enemy.x, enemy.y, 16, 16)) {
+				    		enemy.alive = false;
+				    		this.points += 1;
+				    	}
+				    }
+		    	});
 		    	this.mana -= 30;
-		    } else if (Input.justpressed(Key.LEFT)) {
+		    } else {
+		    	Sound.play("denied");
+		    }
+		   } else if (Input.justpressed(Key.RIGHT)) {
+	    	if (this.mana > 30) {	    		
 		    	Sound.play("powerup");
-		    	//this.velocity.y = 0;
 		    	this.locked = true;
-		    	Core.delaycall(function () {
+			    new Beam(this.player, 0.75, 0, function () {
 			    	this.velocity.x = -100;
 			    	this.locked = false;
 			    	Sound.play("blink");
-		    	}, 1.0);
+			    	for (enemy in this.enemies) {
+				    	if (Geom.overlap(this.player.x, this.player.y, Gfx.screenwidth, 16, enemy.x, enemy.y, 16, 16)) {
+				    		enemy.alive = false;
+				    		this.points += 1;
+				    	}
+				    }
+		    	});
 		    	this.mana -= 30;
+	    	} else {
+	    		Sound.play("denied");
 		    }
 	    }
+    } else {
+	    this.velocity.y = Math.min(0, this.velocity.y + 100 * dt);    	
     }
 
     for (enemy in this.enemies) {
     	if (Geom.overlap(this.player.x, this.player.y, 16, 16, enemy.x, enemy.y, 16, 16)) {
     		this.player.alive = false;
+    		Scene.restart(Main);
     	}
     }
 
     if (this.player.y > Gfx.screenheight - 12) {
     	this.player.alive = false;
+  		Scene.restart(Main);
     }
   }
 }
