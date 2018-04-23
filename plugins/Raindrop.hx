@@ -39,6 +39,26 @@ class Beam extends Behavior {
 	}
 }
 
+class TextBox extends Behavior {
+  var text:String;
+  var size:Float;
+  var color:Int;
+  var align:Int;
+  var alpha:Float;
+  //var font:String;
+  public function new (entity, text:String, color:Int = 0, size:Float = 12.0, align:Int = 0, alpha:Float = 1) {//, ?font:String = "default")
+    super(entity);
+    this.text = text;
+    this.size = size;
+    this.color = color;
+    this.align = align;
+  }
+  public override function draw () {
+    //Text.size = this.size;
+    Text.display(this.entity.x, this.entity.y, this.text, this.color, this.entity.alpha);
+  }
+}
+
 class Animate extends Behavior {
 	var frame:Int = 0;
 	var frames:Int;
@@ -60,12 +80,12 @@ class Animate extends Behavior {
 			this.frame = this.frame + 1;
 			if (this.frame >= this.frames) {
 				if (this.remove) this.entity.alive = false;
-				else this.frame = 0;
+				this.frame = 0;
 			} 
 		}
 	}
 	public override function draw () {
-		Gfx.drawtile(Math.round(this.entity.x), Math.round(this.entity.y), this.sprite, this.frame);
+		Gfx.drawtile(Math.round(this.entity.x), Math.round(this.entity.y), this.sprite, this.frame);      
 	}
 }
 
@@ -123,19 +143,25 @@ class Crop extends Behavior {
 
 class Periodic extends Behavior {
 	var time:Float;
-	var callback:Void->Void;
+	var callback:Raindrop.Entity->Void;
 	var interval:Float;
-	public function new(entity, interval, callback) {
+  var repeat:Bool;
+	public function new(entity, interval, callback:Raindrop.Entity->Void, repeat:Bool = true) {
 		super(entity);
 		this.time = 0;
 		this.interval = interval;
 		this.callback = callback;
+    this.repeat = repeat;
 	}
 	public override function update (dt) {
 		this.time += dt;
 		if (this.time >= this.interval) {
-			this.time = 0;
-			this.callback();
+      this.callback(this.entity);
+      if (this.repeat) {
+  			this.time = 0;      
+      } else {
+        this.entity.remove_behavior(this);
+      }
 		}
 	}
 }
@@ -143,13 +169,17 @@ class Periodic extends Behavior {
 class Entity {
   public var x:Float;
   public var y:Float;
+  public var alpha:Float;
   public var alive:Bool;
   var text:String;
+  var callback:Raindrop.Entity->Void;
   var behaviors:Array<Behavior> = new Array();
-  public function new (x, y) {
+  public function new (x, y, ?callback:Raindrop.Entity->Void) {
     this.x = x;
     this.y = y;
+    this.alpha = 1.0;
     this.alive = true;
+    this.callback = callback;
     //this.behaviors.push(new Animate(this, sprite, 0.1));
     //this.behaviors.push(new Velocity(this, 20, 10));
   }
@@ -171,5 +201,11 @@ class Entity {
   }
   public function remove_behavior (behavior) {
   	this.behaviors.remove(behavior);
+  }
+  public function die () {
+    this.alive = false;
+    if (this.callback != null) {
+      this.callback(this);
+    }
   }
 }

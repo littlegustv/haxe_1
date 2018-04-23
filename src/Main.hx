@@ -2,16 +2,15 @@
 
 Let's keep it simple!
 
-- combo system
-	- display text behavior ("COMBO +1")
-	- particle behavior (array of relative x,y positions, single draw callback?)
+x- combo system
+	x- display text behavior ("COMBO +1")
 	- health/mana recover system
 		- 'recent damage' is recoverable, mana is always boosted
 		- affected by current combo
 
-- entity die method (alive = true), optional callback with delay
-	- particle effects
-	- hit/destroy sound effects
+x- entity die method (alive = true), optional callback with delay
+	x- particle effects
+	x- hit/destroy sound effects
 
 - elegant solution to screen wrapping?
 
@@ -43,6 +42,7 @@ class Main {
   var health:Float;
   var locked:Bool;
   var points:Int;
+  var combo:Int;
   var st:Float = 0; // for some reason Core.time here or in init() doesn't run in time to be valid for update(), so I set it to 0
   function init(){
     //this.titles = [];
@@ -74,8 +74,21 @@ class Main {
 		this.mana = 100;
 		this.health = 100;
 		this.points = 0;
+    this.combo = 0;
 
-    this.player = new Raindrop.Entity(100, 100);
+    this.player = new Raindrop.Entity(100, 100, function (myself:Raindrop.Entity) {
+      myself.alive = false;
+      for (i in 0...20) {
+        var p = new Raindrop.Entity(myself.x, myself.y);
+        new Raindrop.Animate(p, "dust", 0.25, true);
+        new Raindrop.Velocity(p, Random.int(-20,20), Random.int(-20, 20));
+        this.entities.unshift(p);
+      }
+      Sound.play("hit");
+      Core.delaycall(function () {
+        Scene.restart(Main);
+      }, 1);
+    });
     this.animate = new Raindrop.Animate(this.player, "jump", 0.4);
     this.velocity = new Raindrop.Velocity(this.player, 0, 0);
     new Raindrop.Wrap(this.player, 0, -100, Gfx.screenwidth, Gfx.screenheight + 100);
@@ -92,10 +105,11 @@ class Main {
 	    new Raindrop.Animate(building, "building", 1);
 	    this.entities.push(building);
 	    this.entities.push(ground);
-	    this.entities.unshift(sky);
+	    //this.entities.unshift(sky);
     }
 
-    Music.play("soundtrack");
+    //Music.play("soundtrack");
+    Core.showstats = true;
   }
  
   function update() {
@@ -104,9 +118,11 @@ class Main {
     this.st = nt;
 
     //Layer.drawto("fg");
-
     for (entity in this.entities) {
       entity.draw();
+    }
+
+    for (entity in this.entities) {
       entity.update(dt);
     }
 
@@ -119,24 +135,46 @@ class Main {
     // remove from enemies (collision) list as well
 
     if (Random.chance(2)) {
-    	var e = new Raindrop.Entity(Random.int(0, Gfx.screenwidth), 1);
+    	var e = new Raindrop.Entity(Random.int(0, Gfx.screenwidth), 1, function (myself:Raindrop.Entity) {
+        myself.alive = false;
+        this.combo += 1;
+        this.points += this.combo;
+        for (i in 0...20) {
+          var p = new Raindrop.Entity(myself.x, myself.y);
+          new Raindrop.Animate(p, "dust", 0.25, true);
+          new Raindrop.Velocity(p, Random.int(-20,20), Random.int(-20, 20));
+          this.entities.unshift(p);
+        }
+        var t = new Raindrop.Entity(myself.x, myself.y - 8);
+        new Raindrop.TextBox(t, '${this.combo} COMBO', Col.BLUE);
+        new Raindrop.Periodic(t, 1, function (myself) {
+          myself.die();
+        }, false);
+        var h = new Raindrop.Entity(myself.x, myself.y);
+        if (this.health < 100) {
+          this.health = Math.min(100, this.health + 5);
+          this.mana = Math.min(100, this.mana + 5);
+          new Raindrop.TextBox(h, "+5 Mana, +5 HP!", Col.RED);
+          new Raindrop.Periodic(h, 1, function (myself) {
+            myself.die();
+          }, false);
+        } else {
+          this.mana = Math.min(100, this.mana + 10);
+          new Raindrop.TextBox(h, "+10 Mana!", Col.RED);
+          new Raindrop.Periodic(h, 1, function (myself) {
+            myself.die();
+          }, false);
+        }
+        this.entities.push(t);
+        this.entities.push(h);
+      });
     	new Raindrop.Animate(e, "asteroid", 1);
     	new Raindrop.Velocity(e, Random.int(-50, 50), 50);
     	new Raindrop.Crop(e, 0, 0, Gfx.screenwidth, Gfx.screenheight);
     	this.entities.push(e);
     	this.enemies.push(e);
     }
-    /*
-    if(Gui.button("Spawn")){
-    	for (i in 0...10) {    		
-	    	var e = new Entity(Random.int(0, Gfx.screenwidth), 1);
-	    	new Animate(e, "asteroid", 1);
-	    	new Velocity(e, Random.int(-50, 50), 50);
-	    	new Crop(e, 0, 0, Gfx.screenwidth, Gfx.screenheight);
-	    	this.entities.push(e);
-	    	this.enemies.push(e);
-    	}
-    }*/
+
     Gui.text('MP: ${Math.round(this.mana)} !!!');
     Gui.text('HHP: ${Math.round(this.health)} ?!?');
     Gui.text('Points: ${this.points}.');
@@ -166,14 +204,7 @@ class Main {
 			    	Sound.play("blink");
 			    	for (enemy in this.enemies) {
 				    	if (Geom.overlap(this.player.x - Gfx.screenwidth, this.player.y, Gfx.screenwidth, 16, enemy.x, enemy.y, 16, 16)) {
-				    		enemy.alive = false;
-				    		this.points += 1;
-				    		if (this.health < 100) {
-				    			this.health = Math.min(100, this.health + 5);
-				    			this.mana = Math.min(100, this.mana + 5);
-				    		} else {
-				    			this.mana = Math.min(100, this.mana + 10);
-				    		}
+				    		enemy.die();
 				    	}
 				    }
 		    	});
@@ -191,14 +222,7 @@ class Main {
 			    	Sound.play("blink");
 			    	for (enemy in this.enemies) {
 				    	if (Geom.overlap(this.player.x, this.player.y, Gfx.screenwidth, 16, enemy.x, enemy.y, 16, 16)) {
-				    		enemy.alive = false;
-				    		this.points += 1;				    		
-				    		if (this.health < 100) {
-				    			this.health = Math.min(100, this.health + 5);
-				    			this.mana = Math.min(100, this.mana + 5);
-				    		} else {
-				    			this.mana = Math.min(100, this.mana + 10);
-				    		}
+                enemy.die();
 				    	}
 				    }
 		    	});
@@ -215,10 +239,9 @@ class Main {
     	if (Geom.overlap(this.player.x, this.player.y, 16, 16, enemy.x, enemy.y, 16, 16)) {
     		this.health -= 30;
   			Sound.play("hit_small");
-  			enemy.alive = false;
+  			enemy.die();
     		if (this.health <= 0) {
-    			this.player.alive = false;
-	    		Scene.restart(Main);
+    			this.player.die();
     		}
     	}
     }
@@ -229,8 +252,7 @@ class Main {
   		this.player.y = Gfx.screenheight - 13;
     	this.health -= 30;
   		if (this.health <= 0) {
-  			this.player.alive = false;
-    		Scene.restart(Main);
+  			this.player.die();
   		}
     }
   }
