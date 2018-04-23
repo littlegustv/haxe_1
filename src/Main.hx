@@ -1,186 +1,46 @@
+/*
+
+Let's keep it simple!
+
+- combo system
+	- display text behavior ("COMBO +1")
+	- particle behavior (array of relative x,y positions, single draw callback?)
+	- health/mana recover system
+		- 'recent damage' is recoverable, mana is always boosted
+		- affected by current combo
+
+- entity die method (alive = true), optional callback with delay
+	- particle effects
+	- hit/destroy sound effects
+
+- elegant solution to screen wrapping?
+
+- enemies
+	- projectiles
+
+- improve hitboxes
+	- more robust method?
+
+- basic GUI, scenes
+
+- upgrades/upgrade menu (or simple in-game powerup pickups?)
+	- delayed blast verticle laser (like 1 second after, at your old position)
+	- 
+
+- boss!
+
+*/
+
 import haxegon.*;
-
-class Behavior {
-	var entity:Entity;
-	public function new (entity) {
-		this.entity = entity;
-		this.entity.add_behavior(this);
-	}
-	public function update(dt:Float) {
-	}
-	public function draw() {
-	}
-}
-
-class Beam extends Behavior {
-	var time:Float;
-	var interval:Float;
-	var callback:Void->Void;
-	var direction:Int;
-	public function new (entity, interval, direction, callback) {
-		super(entity);
-		this.time = 0;
-		this.direction = direction;
-		this.interval = interval;
-		this.callback = callback;
-	}
-	public override function update(dt) {
-		this.time += dt;
-		if (this.time > this.interval) {
-			this.callback();
-			this.entity.remove_behavior(this);
-		}
-	}
-	public override function draw () {
-		var h:Float = 16 * this.time / this.interval;
-		var x = this.direction * Gfx.screenwidth + this.entity.x + 8;
-		var y = this.entity.y + 8 - h / 2;
-		Gfx.fillbox(x, y, Gfx.screenwidth, h, Col.WHITE, this.time / this.interval);
-	}
-}
-
-class Animate extends Behavior {
-	var frame:Int = 0;
-	var frames:Int;
-	var speed:Float;
-	var time:Float = 0;
-	public var sprite:String;
-	var remove:Bool;
-	public function new (entity, sprite, speed, remove:Bool = false) {
-		super(entity);
-		this.sprite = sprite;
-		this.frames = Gfx.numberoftiles(sprite);
-		this.speed = speed;
-		this.remove = remove;
-	}
-	public override function update (dt:Float) {
-		this.time += dt;
-		if (this.time >= this.speed) {
-			this.time = 0;
-			this.frame = this.frame + 1;
-			if (this.frame >= this.frames) {
-				if (this.remove) this.entity.alive = false;
-				else this.frame = 0;
-			} 
-		}
-	}
-	public override function draw () {
-		Gfx.drawtile(Math.round(this.entity.x), Math.round(this.entity.y), this.sprite, this.frame);
-	}
-}
-
-class Velocity extends Behavior {
-	public var x:Float;
-	public var y:Float;
-	public function new(entity, x, y) {
-		super(entity);
-		this.x = x;
-		this.y = y;
-	}
-	public override function update (dt:Float) {
-		this.entity.x += this.x * dt;
-		this.entity.y += this.y * dt;
-	}
-	public override function draw () {}
-}
-
-class Wrap extends Behavior {
-	var minx:Int;
-	var maxx:Int;
-	var miny:Int;
-	var maxy:Int;
-	public function new(entity, minx, miny, maxx, maxy) {
-		super(entity);
-		this.minx = minx;
-		this.miny = miny;
-		this.maxx = maxx;
-		this.maxy = maxy;
-	}
-	public override function update(dt) {
-		if (this.entity.x > this.maxx) this.entity.x = this.minx;
-		if (this.entity.x < this.minx) this.entity.x = this.maxx;
-		if (this.entity.y > this.maxy) this.entity.y = this.miny;
-		if (this.entity.y < this.miny) this.entity.y = this.maxy;		
-	}
-}
-
-class Crop extends Behavior {
-	var minx:Int;
-	var maxx:Int;
-	var miny:Int;
-	var maxy:Int;
-	public function new(entity, minx, miny, maxx, maxy) {
-		super(entity);
-		this.minx = minx;
-		this.miny = miny;
-		this.maxx = maxx;
-		this.maxy = maxy;
-	}
-	public override function update(dt) {
-		if (this.entity.x > this.maxx || this.entity.x < this.minx || this.entity.y > this.maxy || this.entity.y < this.miny) this.entity.alive = false;
-	}
-}
-
-class Periodic extends Behavior {
-	var time:Float;
-	var callback:Void->Void;
-	var interval:Float;
-	public function new(entity, interval, callback) {
-		super(entity);
-		this.time = 0;
-		this.interval = interval;
-		this.callback = callback;
-	}
-	public override function update (dt) {
-		this.time += dt;
-		if (this.time >= this.interval) {
-			this.time = 0;
-			this.callback();
-		}
-	}
-}
-
-class Entity {
-  public var x:Float;
-  public var y:Float;
-  public var alive:Bool;
-  var text:String;
-  var behaviors:Array<Behavior> = new Array();
-  public function new (x, y) {
-    this.x = x;
-    this.y = y;
-    this.alive = true;
-    //this.behaviors.push(new Animate(this, sprite, 0.1));
-    //this.behaviors.push(new Velocity(this, 20, 10));
-  }
-  public function update (dt:Float) {
-    for (behavior in this.behaviors) {
-    	behavior.update(dt);
-    }
-  }
-  public function draw () {
-    //Text.display(this.x, this.y, this.text);
-    for (behavior in this.behaviors) {
-    	behavior.draw();
-    }
-    //Gfx.drawtile(this.x, this.y, "bug", 1);
-  }
-  public function add_behavior (behavior) {
-  	this.behaviors.unshift(behavior);
-  	//trace('added behavior ${behavior}');
-  }
-  public function remove_behavior (behavior) {
-  	this.behaviors.remove(behavior);
-  }
-}
 
 class Main {
   var entities = new Array();
   var enemies = new Array();
-  var player:Entity;
-  var velocity:Velocity;
-  var animate:Animate;
+  var player:Raindrop.Entity;
+  var velocity:Raindrop.Velocity;
+  var animate:Raindrop.Animate;
   var mana:Float;
+  var health:Float;
   var locked:Bool;
   var points:Int;
   var st:Float = 0; // for some reason Core.time here or in init() doesn't run in time to be valid for update(), so I set it to 0
@@ -198,6 +58,7 @@ class Main {
     Gfx.loadtiles("turn", 16, 17);
     Gfx.loadtiles("dust", 8, 8);
     Gfx.loadtiles("building", 32, 32);
+    Gfx.loadtiles("sky", 48, 28);
     Gfx.loadtiles("ground", 64, 13);
 		Gfx.clearcolor = Col.BLACK;
 
@@ -205,26 +66,33 @@ class Main {
 		Sound.load("powerup");
 		Sound.load("blink");
 		Sound.load("denied");
+		Sound.load("hit");
+		Sound.load("hit_small");
 
 		//Core.showstats = true;
 		this.locked = false;
 		this.mana = 100;
+		this.health = 100;
 		this.points = 0;
 
-    this.player = new Entity(100, 100);
-    this.animate = new Animate(this.player, "jump", 0.4);
-    this.velocity = new Velocity(this.player, 0, 0);
-    new Wrap(this.player, 0, -100, Gfx.screenwidth, Gfx.screenheight + 100);
+    this.player = new Raindrop.Entity(100, 100);
+    this.animate = new Raindrop.Animate(this.player, "jump", 0.4);
+    this.velocity = new Raindrop.Velocity(this.player, 0, 0);
+    new Raindrop.Wrap(this.player, 0, -100, Gfx.screenwidth, Gfx.screenheight + 100);
     this.entities.push(this.player);
 
-    for (i in 0...6) {
-	    var ground = new Entity(i * 64, Gfx.screenheight - 6);
-	    new Animate(ground, "ground", 1);
+    for (i in 0...10) {
+	    var sky = new Raindrop.Entity(i * 48, 0);
+	    new Raindrop.Animate(sky, "sky", 1);
 
-	    var building = new Entity(i * 64 + 16, Gfx.screenheight - 20);
-	    new Animate(building, "building", 1);
+	    var ground = new Raindrop.Entity(i * 64, Gfx.screenheight - 6);
+	    new Raindrop.Animate(ground, "ground", 1);
+
+	    var building = new Raindrop.Entity(i * 64 + 16, Gfx.screenheight - 20);
+	    new Raindrop.Animate(building, "building", 1);
 	    this.entities.push(building);
 	    this.entities.push(ground);
+	    this.entities.unshift(sky);
     }
 
     Music.play("soundtrack");
@@ -251,10 +119,10 @@ class Main {
     // remove from enemies (collision) list as well
 
     if (Random.chance(2)) {
-    	var e = new Entity(Random.int(0, Gfx.screenwidth), 1);
-    	new Animate(e, "asteroid", 1);
-    	new Velocity(e, Random.int(-50, 50), 50);
-    	new Crop(e, 0, 0, Gfx.screenwidth, Gfx.screenheight);
+    	var e = new Raindrop.Entity(Random.int(0, Gfx.screenwidth), 1);
+    	new Raindrop.Animate(e, "asteroid", 1);
+    	new Raindrop.Velocity(e, Random.int(-50, 50), 50);
+    	new Raindrop.Crop(e, 0, 0, Gfx.screenwidth, Gfx.screenheight);
     	this.entities.push(e);
     	this.enemies.push(e);
     }
@@ -270,6 +138,7 @@ class Main {
     	}
     }*/
     Gui.text('MP: ${Math.round(this.mana)} !!!');
+    Gui.text('HHP: ${Math.round(this.health)} ?!?');
     Gui.text('Points: ${this.points}.');
     
     this.mana = Math.min(100, this.mana + 5 * dt);
@@ -280,18 +149,18 @@ class Main {
 	    }
 
 	    if (Input.justpressed(Key.UP)) {
-	    	var d = new Entity(this.player.x + 4, this.player.y + 4);
-	    	new Animate(d, "dust", 0.2, true);
+	    	var d = new Raindrop.Entity(this.player.x + 4, this.player.y + 4);
+	    	new Raindrop.Animate(d, "dust", 0.2, true);
 	    	this.entities.unshift(d);
 	    	Sound.play("jump");
-
-	    	this.velocity.y = -100;
+	    	trace(Math.min(100, this.player.y));
+	    	this.velocity.y = -Math.min(100, this.player.y * 2);
 	    }
 	    if (Input.justpressed(Key.LEFT)) {
 		    if (this.mana > 30) {
 		    	Sound.play("powerup");
 		    	this.locked = true;
-			    new Beam(this.player, 0.75, -1, function () {
+			    new Raindrop.Beam(this.player, 0.75, -1, function () {
 			    	this.velocity.x = 100;
 			    	this.locked = false;
 			    	Sound.play("blink");
@@ -299,6 +168,12 @@ class Main {
 				    	if (Geom.overlap(this.player.x - Gfx.screenwidth, this.player.y, Gfx.screenwidth, 16, enemy.x, enemy.y, 16, 16)) {
 				    		enemy.alive = false;
 				    		this.points += 1;
+				    		if (this.health < 100) {
+				    			this.health = Math.min(100, this.health + 5);
+				    			this.mana = Math.min(100, this.mana + 5);
+				    		} else {
+				    			this.mana = Math.min(100, this.mana + 10);
+				    		}
 				    	}
 				    }
 		    	});
@@ -310,14 +185,20 @@ class Main {
 	    	if (this.mana > 30) {	    		
 		    	Sound.play("powerup");
 		    	this.locked = true;
-			    new Beam(this.player, 0.75, 0, function () {
+			    new Raindrop.Beam(this.player, 0.75, 0, function () {
 			    	this.velocity.x = -100;
 			    	this.locked = false;
 			    	Sound.play("blink");
 			    	for (enemy in this.enemies) {
 				    	if (Geom.overlap(this.player.x, this.player.y, Gfx.screenwidth, 16, enemy.x, enemy.y, 16, 16)) {
 				    		enemy.alive = false;
-				    		this.points += 1;
+				    		this.points += 1;				    		
+				    		if (this.health < 100) {
+				    			this.health = Math.min(100, this.health + 5);
+				    			this.mana = Math.min(100, this.mana + 5);
+				    		} else {
+				    			this.mana = Math.min(100, this.mana + 10);
+				    		}
 				    	}
 				    }
 		    	});
@@ -332,14 +213,25 @@ class Main {
 
     for (enemy in this.enemies) {
     	if (Geom.overlap(this.player.x, this.player.y, 16, 16, enemy.x, enemy.y, 16, 16)) {
-    		this.player.alive = false;
-    		Scene.restart(Main);
+    		this.health -= 30;
+  			Sound.play("hit_small");
+  			enemy.alive = false;
+    		if (this.health <= 0) {
+    			this.player.alive = false;
+	    		Scene.restart(Main);
+    		}
     	}
     }
 
     if (this.player.y > Gfx.screenheight - 12) {
-    	this.player.alive = false;
-  		Scene.restart(Main);
+  		Sound.play("hit");
+  		this.velocity.y = -100;
+  		this.player.y = Gfx.screenheight - 13;
+    	this.health -= 30;
+  		if (this.health <= 0) {
+  			this.player.alive = false;
+    		Scene.restart(Main);
+  		}
     }
   }
 }
