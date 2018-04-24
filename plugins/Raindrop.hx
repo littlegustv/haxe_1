@@ -12,6 +12,41 @@ class Behavior {
 	}
 }
 
+class Lerp extends Behavior {
+  var time:Float;
+  var rate:Float;
+  var x:Float;
+  var y:Float;
+  var callback:Raindrop.Entity->Void;
+  //var angle:Float;
+  var alpha:Float;
+  public function new (entity, rate:Float, ?x:Float, ?y:Float, ?alpha:Float, ?callback:Raindrop.Entity->Void) {
+    super(entity);
+    this.time = 0;
+    this.rate = rate;
+    this.x = if (x != null) x else this.entity.x;
+    this.y = if (y != null) y else this.entity.y;
+    this.alpha = if (alpha != null) alpha else this.entity.alpha;
+  }
+  public override function update(dt:Float) {
+    this.time += this.rate * dt;
+    if (this.time >= 1) {
+      this.entity.x = this.x;
+      this.entity.y = this.y;
+      this.entity.alpha = this.alpha;
+      this.entity.remove_behavior(this);
+      if (this.callback != null) this.callback(this.entity);
+    } else {
+      this.entity.x = this.lerp(this.entity.x, this.x, this.time);
+      this.entity.y = this.lerp(this.entity.y, this.y, this.time);
+      this.entity.alpha = this.lerp(this.entity.alpha, this.alpha, this.time);
+    }
+  }
+  private function lerp(start:Float, end:Float, time:Float) {
+    return (1 - time) * start + time * end;
+  }
+}
+
 class Beam extends Behavior {
 	var time:Float;
 	var interval:Float;
@@ -140,6 +175,35 @@ class Crop extends Behavior {
 		if (this.entity.x > this.maxx || this.entity.x < this.minx || this.entity.y > this.maxy || this.entity.y < this.miny) this.entity.alive = false;
 	}
 }
+
+class Bounce extends Behavior {
+  var minx:Int;
+  var maxx:Int;
+  var miny:Int;
+  var maxy:Int;
+  var r:Float;
+  var velocity:Raindrop.Velocity;
+  public function new(entity, minx, miny, maxx, maxy, velocity:Raindrop.Velocity, ?r:Float) {
+    super(entity);
+    this.minx = minx;
+    this.miny = miny;
+    this.maxx = maxx;
+    this.maxy = maxy;
+    this.velocity = velocity;
+    this.r = if (r != null) r else 1;
+  }
+  public override function update(dt) {
+    if (this.entity.x > this.maxx || this.entity.x < this.minx) {
+      this.velocity.x *= -1 * this.r;
+      this.entity.x = Geom.clamp(this.entity.x, this.minx, this.maxx);
+    }
+    if (this.entity.y > this.maxy || this.entity.y < this.miny) {
+      this.velocity.y *= -1 * this.r;
+      this.entity.y = Geom.clamp(this.entity.y, this.miny, this.maxy);
+    }
+  }
+}
+
 
 class Periodic extends Behavior {
 	var time:Float;

@@ -1,6 +1,9 @@
 /*
 
-Let's keep it simple!
+Let's keep it simple! (demo - set of waves and boss)
+
+- BUGS
+  - player.die() being trigger multiple times (multi-reset on death)
 
 x- combo system
 	x- display text behavior ("COMBO +1")
@@ -11,7 +14,7 @@ x- entity die method (alive = true), optional callback with delay
 	x- particle effects
 	x- hit/destroy sound effects
 
-- elegant solution to screen wrapping?
+x- elegant solution to screen wrapping? (BOUNCE)
 
 - enemies
 	- projectiles
@@ -23,7 +26,6 @@ x- entity die method (alive = true), optional callback with delay
 
 - upgrades/upgrade menu (or simple in-game powerup pickups?)
 	- delayed blast verticle laser (like 1 second after, at your old position)
-	- 
 
 - boss!
 
@@ -93,7 +95,8 @@ class Main {
     });
     this.animate = new Raindrop.Animate(this.player, "jump", 0.4);
     this.velocity = new Raindrop.Velocity(this.player, 0, 0);
-    new Raindrop.Wrap(this.player, 0, -100, Gfx.screenwidth, Gfx.screenheight + 100);
+    //new Raindrop.Wrap(this.player, 0, -100, Gfx.screenwidth, Gfx.screenheight + 100);
+    new Raindrop.Bounce(this.player, 0, -100, Gfx.screenwidth, Gfx.screenheight - 16, this.velocity);
     this.entities.push(this.player);
 
     for (i in 0...10) {
