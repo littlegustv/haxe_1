@@ -5,6 +5,8 @@ Let's keep it simple! (demo - set of waves and boss)
 - BUGS
   - player.die() being trigger multiple times (multi-reset on death)
 
+- BAT themed? BATFAX!
+
 x- combo system
 	x- display text behavior ("COMBO +1")
 	x- health/mana recover system
@@ -17,17 +19,30 @@ x- entity die method (alive = true), optional callback with delay
 x- elegant solution to screen wrapping? (BOUNCE)
 
 - enemies
+  - movement
+    - 'ladder'
+    - grid-based spiral
+    - vertical up/down bounce
+    - zig-zag bounce
+    - periodic relocate to new position
 	- projectiles
+    - homing
+    - burst
+    - spread
+    - single
 
 - improve hitboxes
 	- more robust method?
 
 - basic GUI, scenes
+  - GUI plugin styling
 
 - upgrades/upgrade menu (or simple in-game powerup pickups?)
 	- delayed blast verticle laser (like 1 second after, at your old position)
 
 - boss!
+  - circular beam weapon (damages with a certain radius) - forces you to back off
+  - spawn enemies?
 
 */
 
