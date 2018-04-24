@@ -105,8 +105,8 @@ class Main {
 
 	    var building = new Raindrop.Entity(i * 64 + 16, Gfx.screenheight - 20);
 	    new Raindrop.Animate(building, "building", 1);
-	    this.entities.push(building);
-	    this.entities.push(ground);
+	    this.entities.unshift(ground);
+      this.entities.unshift(building);
 	    //this.entities.unshift(sky);
     }
 
@@ -140,8 +140,8 @@ class Main {
     }
     // remove from enemies (collision) list as well
 
-    if (Random.chance(2)) {
-    	var e = new Raindrop.Entity(Random.int(0, Gfx.screenwidth), 1, function (myself:Raindrop.Entity) {
+    if (Random.chance(2) && this.enemies.length < 10) {
+    	var e = new Raindrop.Entity(1, Random.int(24, Gfx.screenheight - 24), function (myself:Raindrop.Entity) {
         myself.alive = false;
         this.combo += 1;
         this.combotimer = 0;
@@ -175,9 +175,18 @@ class Main {
         this.entities.push(t);
         this.entities.push(h);
       });
-    	new Raindrop.Animate(e, "asteroid", 1);
-    	new Raindrop.Velocity(e, Random.int(-50, 50), 50);
-    	new Raindrop.Crop(e, 0, 0, Gfx.screenwidth, Gfx.screenheight);
+    	new Raindrop.Animate(e, "bug", 0.2);
+    	new Raindrop.Velocity(e, 50, 0);
+    	new Raindrop.Crop(e, -100, 0, Gfx.screenwidth + 100, Gfx.screenheight);
+      new Raindrop.Wrap(e, 0, -100, Gfx.screenwidth, Gfx.screenheight + 100);
+      new Raindrop.Periodic(e, 1, function (myself:Raindrop.Entity) {
+        var p = new Raindrop.Entity(myself.x + 16, myself.y + 12);
+        new Raindrop.Animate(p, "asteroid", 1);
+        new Raindrop.Velocity(p, 100, 0);
+        new Raindrop.Crop(p, 0, 0, Gfx.screenwidth, Gfx.screenheight);
+        this.entities.unshift(p);
+        this.enemies.unshift(p);
+      });
     	this.entities.push(e);
     	this.enemies.push(e);
     }
