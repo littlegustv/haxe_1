@@ -4,9 +4,8 @@ Let's keep it simple!
 
 x- combo system
 	x- display text behavior ("COMBO +1")
-	- health/mana recover system
-		- 'recent damage' is recoverable, mana is always boosted
-		- affected by current combo
+	x- health/mana recover system
+		x- affected by current combo
 
 x- entity die method (alive = true), optional callback with delay
 	x- particle effects
@@ -43,6 +42,8 @@ class Main {
   var locked:Bool;
   var points:Int;
   var combo:Int;
+  var combotimer:Float;
+  static var combothreshold:Int = 3;
   var st:Float = 0; // for some reason Core.time here or in init() doesn't run in time to be valid for update(), so I set it to 0
   function init(){
     //this.titles = [];
@@ -75,6 +76,7 @@ class Main {
 		this.health = 100;
 		this.points = 0;
     this.combo = 0;
+    this.combotimer = 0;
 
     this.player = new Raindrop.Entity(100, 100, function (myself:Raindrop.Entity) {
       myself.alive = false;
@@ -108,14 +110,18 @@ class Main {
 	    //this.entities.unshift(sky);
     }
 
-    //Music.play("soundtrack");
-    Core.showstats = true;
+    Music.play("soundtrack");
   }
  
   function update() {
     var nt:Float = Core.time;
     var dt:Float = Math.min(nt - this.st, 1.0 / 30); // cap at 30 frames per second ... what will this do, I wonder?
     this.st = nt;
+
+    this.combotimer += dt;
+    if (this.combotimer > combothreshold) {
+      this.combo = 0;
+    }
 
     //Layer.drawto("fg");
     for (entity in this.entities) {
@@ -138,6 +144,7 @@ class Main {
     	var e = new Raindrop.Entity(Random.int(0, Gfx.screenwidth), 1, function (myself:Raindrop.Entity) {
         myself.alive = false;
         this.combo += 1;
+        this.combotimer = 0;
         this.points += this.combo;
         for (i in 0...20) {
           var p = new Raindrop.Entity(myself.x, myself.y);
@@ -152,15 +159,15 @@ class Main {
         }, false);
         var h = new Raindrop.Entity(myself.x, myself.y);
         if (this.health < 100) {
-          this.health = Math.min(100, this.health + 5);
-          this.mana = Math.min(100, this.mana + 5);
-          new Raindrop.TextBox(h, "+5 Mana, +5 HP!", Col.RED);
+          this.health = Math.min(100, this.health + 5 + this.combo);
+          this.mana = Math.min(100, this.mana + 5 + this.combo);
+          new Raindrop.TextBox(h, '+${5 + this.combo} Mana, +${5 + this.combo} HP!', Col.RED);
           new Raindrop.Periodic(h, 1, function (myself) {
             myself.die();
           }, false);
         } else {
-          this.mana = Math.min(100, this.mana + 10);
-          new Raindrop.TextBox(h, "+10 Mana!", Col.RED);
+          this.mana = Math.min(100, this.mana + 10 + this.combo);
+          new Raindrop.TextBox(h, '+${10 + this.combo} Mana!', Col.RED);
           new Raindrop.Periodic(h, 1, function (myself) {
             myself.die();
           }, false);
@@ -198,7 +205,7 @@ class Main {
 		    if (this.mana > 30) {
 		    	Sound.play("powerup");
 		    	this.locked = true;
-			    new Raindrop.Beam(this.player, 0.75, -1, function () {
+			    new Raindrop.Beam(this.player, 0.4, -1, function () {
 			    	this.velocity.x = 100;
 			    	this.locked = false;
 			    	Sound.play("blink");
@@ -216,7 +223,7 @@ class Main {
 	    	if (this.mana > 30) {	    		
 		    	Sound.play("powerup");
 		    	this.locked = true;
-			    new Raindrop.Beam(this.player, 0.75, 0, function () {
+			    new Raindrop.Beam(this.player, 0.4, 0, function () {
 			    	this.velocity.x = -100;
 			    	this.locked = false;
 			    	Sound.play("blink");

@@ -17,7 +17,7 @@
       file="newproject" 
    />
 
-  <window width="${windowwidth}" height="${windowheight}" if="flash || cpp || neko"></window>
+  <window width="${2 * windowwidth}" height="${2 * windowheight}" if="flash || cpp || neko"></window>
   <window width="0" height="0" if="html5 || mobile"></window>
 	 
 	<window
