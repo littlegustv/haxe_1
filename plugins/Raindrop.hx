@@ -115,7 +115,7 @@ class Animate extends Behavior {
 			this.frame = this.frame + 1;
 			if (this.frame >= this.frames) {
 				if (this.remove) this.entity.alive = false;
-				this.frame = 0;
+				this.frame = this.frame % this.frames;
 			} 
 		}
 	}

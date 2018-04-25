@@ -5,7 +5,7 @@ Let's keep it simple! (demo - set of waves and boss)
 - BUGS
   - player.die() being trigger multiple times (multi-reset on death)
 
-- BAT themed? BATFAX!
+x- BAT themed? BATFAX!
 
 x- combo system
 	x- display text behavior ("COMBO +1")
@@ -60,6 +60,12 @@ class Main {
   var points:Int;
   var combo:Int;
   var combotimer:Float;
+  var gravity:Float;
+  var jumpstrength:Float;
+  var maxspeed:Float;
+
+  var invulnerable:Bool = false;
+  var admin:Bool = false;
   static var combothreshold:Int = 3;
   var st:Float = 0; // for some reason Core.time here or in init() doesn't run in time to be valid for update(), so I set it to 0
   function init(){
@@ -73,6 +79,8 @@ class Main {
     Gfx.loadtiles("asteroid", 15, 15);
     Gfx.loadtiles("bug", 18, 34);
     Gfx.loadtiles("jump", 16, 17);
+    Gfx.loadtiles("mosquito", 17, 18);
+    Gfx.loadtiles("bat", 19, 18);
     Gfx.loadtiles("turn", 16, 17);
     Gfx.loadtiles("dust", 8, 8);
     Gfx.loadtiles("building", 32, 32);
@@ -95,6 +103,11 @@ class Main {
     this.combo = 0;
     this.combotimer = 0;
 
+    // constants
+    this.gravity = 250;
+    this.jumpstrength = 175;
+    this.maxspeed = 200;
+
     this.player = new Raindrop.Entity(100, 100, function (myself:Raindrop.Entity) {
       myself.alive = false;
       for (i in 0...20) {
@@ -108,7 +121,7 @@ class Main {
         Scene.restart(Main);
       }, 1);
     });
-    this.animate = new Raindrop.Animate(this.player, "jump", 0.4);
+    this.animate = new Raindrop.Animate(this.player, "bat", 0.4);
     this.velocity = new Raindrop.Velocity(this.player, 0, 0);
     //new Raindrop.Wrap(this.player, 0, -100, Gfx.screenwidth, Gfx.screenheight + 100);
     new Raindrop.Bounce(this.player, 0, -100, Gfx.screenwidth, Gfx.screenheight - 16, this.velocity);
@@ -193,7 +206,7 @@ class Main {
         this.entities.push(t);
         this.entities.push(h);
       });
-    	new Raindrop.Animate(e, "bug", 0.2);
+    	new Raindrop.Animate(e, "mosquito", 0.2);
     	new Raindrop.Velocity(e, 50, 0);
     	new Raindrop.Crop(e, -100, 0, Gfx.screenwidth + 100, Gfx.screenheight);
       new Raindrop.Wrap(e, 0, -100, Gfx.screenwidth, Gfx.screenheight + 100);
@@ -209,13 +222,34 @@ class Main {
     	this.enemies.push(e);
     }
 
-    Gui.text('MP: ${Math.round(this.mana)} !!!');
-    Gui.text('HHP: ${Math.round(this.health)} ?!?');
-    Gui.text('Points: ${this.points}.');
-    
+    //Gui.text('MP: ${Math.round(this.mana)} !!!');
+    //Gui.text('HHP: ${Math.round(this.health)} ?!?');
+    //Gui.text('Points: ${this.points}.');
+
+    if (this.admin) {
+      Gui.window("Movement Control", 0); 
+
+      this.invulnerable = Gui.radio("Invulnerable", this.invulnerable);
+
+      Gui.text('Gravity: ${this.gravity}');
+      this.gravity = Gui.slider(200, 0, 400, this.gravity);
+      Gui.text('Jump Strength: ${this.jumpstrength}');
+      this.jumpstrength = Gui.slider(200, 0, 400, this.jumpstrength);
+      Gui.text('Max (Fall) Speed: ${this.maxspeed}');
+      this.maxspeed = Gui.slider(200, 0, 400, this.maxspeed);
+      if (Gui.button("Close")){
+        this.admin = false;
+      }
+      Gui.end();
+    } else {
+      if (Gui.button("Menu")) {
+        this.admin = true;
+      }
+    }
+
     this.mana = Math.min(100, this.mana + 5 * dt);
     if (!this.locked) {
-	    this.velocity.y = Math.min(100, this.velocity.y + 100 * dt);
+	    this.velocity.y = Math.min(this.maxspeed, this.velocity.y + this.gravity * dt);
 	    if (this.velocity.x != 0) {
 	    	this.velocity.x = Math.round(this.velocity.x - this.velocity.x * dt);
 	    }
@@ -225,15 +259,15 @@ class Main {
 	    	new Raindrop.Animate(d, "dust", 0.2, true);
 	    	this.entities.unshift(d);
 	    	Sound.play("jump");
-	    	trace(Math.min(100, this.player.y));
-	    	this.velocity.y = -Math.min(100, this.player.y * 2);
+	    	//trace(Math.min(100, this.player.y));
+	    	this.velocity.y = -Math.min(this.jumpstrength, this.player.y * 2);
 	    }
 	    if (Input.justpressed(Key.LEFT)) {
 		    if (this.mana > 30) {
 		    	Sound.play("powerup");
 		    	this.locked = true;
 			    new Raindrop.Beam(this.player, 0.4, -1, function () {
-			    	this.velocity.x = 100;
+			    	this.velocity.x = this.jumpstrength;
 			    	this.locked = false;
 			    	Sound.play("blink");
 			    	for (enemy in this.enemies) {
@@ -251,7 +285,7 @@ class Main {
 		    	Sound.play("powerup");
 		    	this.locked = true;
 			    new Raindrop.Beam(this.player, 0.4, 0, function () {
-			    	this.velocity.x = -100;
+			    	this.velocity.x = -this.jumpstrength;
 			    	this.locked = false;
 			    	Sound.play("blink");
 			    	for (enemy in this.enemies) {
@@ -271,24 +305,16 @@ class Main {
 
     for (enemy in this.enemies) {
     	if (Geom.overlap(this.player.x, this.player.y, 16, 16, enemy.x, enemy.y, 16, 16)) {
-    		this.health -= 30;
+    		if (!this.invulnerable) {
+          this.health -= 30;          
+        }
   			Sound.play("hit_small");
   			enemy.die();
     		if (this.health <= 0) {
     			this.player.die();
     		}
     	}
-    }
-
-    if (this.player.y > Gfx.screenheight - 12) {
-  		Sound.play("hit");
-  		this.velocity.y = -100;
-  		this.player.y = Gfx.screenheight - 13;
-    	this.health -= 30;
-  		if (this.health <= 0) {
-  			this.player.die();
-  		}
-    }
+    }    
   }
 }
 
