@@ -123,6 +123,24 @@ class Animate extends Behavior {
 		Gfx.drawtile(Math.round(this.entity.x), Math.round(this.entity.y), this.sprite, this.frame);      
 	}
 }
+class Tile extends Behavior {
+	public var sprite:String;
+	var w:Int;
+	var h:Int;
+	public function new (entity, sprite, w, h) {
+		super(entity);
+		this.sprite = sprite;
+		this.w = w;
+		this.h = h;
+	}
+	public override function draw () {
+		for (i in 0...Math.ceil(this.w / Gfx.imagewidth(this.sprite))) {
+			for (j in 0...Math.ceil(this.h / Gfx.imageheight(this.sprite))) {
+				Gfx.drawtile(Math.round(this.entity.x) + i * Gfx.imagewidth(this.sprite), Math.round(this.entity.y) + j * Gfx.imageheight(this.sprite), this.sprite, 0);
+			}	
+		}
+	}
+}
 
 class Velocity extends Behavior {
 	public var x:Float;
@@ -233,14 +251,18 @@ class Periodic extends Behavior {
 class Entity {
   public var x:Float;
   public var y:Float;
+  public var w:Int;
+  public var h:Int;
   public var alpha:Float;
   public var alive:Bool;
   var text:String;
   var callback:Raindrop.Entity->Void;
   var behaviors:Array<Behavior> = new Array();
-  public function new (x, y, ?callback:Raindrop.Entity->Void) {
+  public function new (x, y, ?w, ?h, ?callback:Raindrop.Entity->Void) {
     this.x = x;
     this.y = y;
+    this.w = w;
+    this.h = h;
     this.alpha = 1.0;
     this.alive = true;
     this.callback = callback;

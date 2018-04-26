@@ -3,7 +3,7 @@
 Let's keep it simple! (demo - set of waves and boss)
 
 - BUGS
-  - player.die() being trigger multiple times (multi-reset on death)
+  x- player.die() being trigger multiple times (multi-reset on death) {was still checking collisions}
 
 x- BAT themed? BATFAX!
 
@@ -31,8 +31,8 @@ x- elegant solution to screen wrapping? (BOUNCE)
     - spread
     - single
 
-- improve hitboxes
-	- more robust method?
+x- improve hitboxes
+	x- more robust method?
 
 - basic GUI, scenes
   - GUI plugin styling
@@ -83,6 +83,8 @@ class Main {
     Gfx.loadtiles("bat", 19, 18);
     Gfx.loadtiles("turn", 16, 17);
     Gfx.loadtiles("dust", 8, 8);
+    Gfx.loadtiles("blob", 10, 10);
+    Gfx.loadtiles("corn", 18, 18);
     Gfx.loadtiles("building", 32, 32);
     Gfx.loadtiles("sky", 48, 28);
     Gfx.loadtiles("ground", 64, 13);
@@ -108,7 +110,7 @@ class Main {
     this.jumpstrength = 175;
     this.maxspeed = 200;
 
-    this.player = new Raindrop.Entity(100, 100, function (myself:Raindrop.Entity) {
+    this.player = new Raindrop.Entity(100, 100, 18, 18, function (myself:Raindrop.Entity) {
       myself.alive = false;
       for (i in 0...20) {
         var p = new Raindrop.Entity(myself.x, myself.y);
@@ -124,10 +126,10 @@ class Main {
     this.animate = new Raindrop.Animate(this.player, "bat", 0.4);
     this.velocity = new Raindrop.Velocity(this.player, 0, 0);
     //new Raindrop.Wrap(this.player, 0, -100, Gfx.screenwidth, Gfx.screenheight + 100);
-    new Raindrop.Bounce(this.player, 0, -100, Gfx.screenwidth, Gfx.screenheight - 16, this.velocity);
+    new Raindrop.Bounce(this.player, 0, -100, Gfx.screenwidth - 16, Gfx.screenheight - 16, this.velocity);
     this.entities.push(this.player);
 
-    for (i in 0...10) {
+    for (i in 0...Math.ceil(Gfx.screenwidth / 18)) {
 	    var sky = new Raindrop.Entity(i * 48, 0);
 	    new Raindrop.Animate(sky, "sky", 1);
 
@@ -136,12 +138,18 @@ class Main {
 
 	    var building = new Raindrop.Entity(i * 64 + 16, Gfx.screenheight - 20);
 	    new Raindrop.Animate(building, "building", 1);
-	    this.entities.unshift(ground);
-      this.entities.unshift(building);
+	    //this.entities.unshift(ground);
+      //this.entities.unshift(building);
 	    //this.entities.unshift(sky);
+      
+      var corn = new Raindrop.Entity(i * 18, Gfx.screenheight - 18);
+      new Raindrop.Animate(corn, "corn", 0.5);
+      this.entities.unshift(corn);
+      
     }
 
-    Music.play("soundtrack");
+
+    //Music.play("soundtrack");
   }
  
   function update() {
@@ -172,7 +180,7 @@ class Main {
     // remove from enemies (collision) list as well
 
     if (Random.chance(2) && this.enemies.length < 10) {
-    	var e = new Raindrop.Entity(1, Random.int(24, Gfx.screenheight - 24), function (myself:Raindrop.Entity) {
+    	var e = new Raindrop.Entity(1, Random.int(24, Gfx.screenheight - 24), 18, 19, function (myself:Raindrop.Entity) {
         myself.alive = false;
         this.combo += 1;
         this.combotimer = 0;
@@ -211,8 +219,8 @@ class Main {
     	new Raindrop.Crop(e, -100, 0, Gfx.screenwidth + 100, Gfx.screenheight);
       new Raindrop.Wrap(e, 0, -100, Gfx.screenwidth, Gfx.screenheight + 100);
       new Raindrop.Periodic(e, 1, function (myself:Raindrop.Entity) {
-        var p = new Raindrop.Entity(myself.x + 16, myself.y + 12);
-        new Raindrop.Animate(p, "asteroid", 1);
+        var p = new Raindrop.Entity(myself.x + 16, myself.y + 12, 10, 10);
+        new Raindrop.Animate(p, "blob", 0.16);
         new Raindrop.Velocity(p, 100, 0);
         new Raindrop.Crop(p, 0, 0, Gfx.screenwidth, Gfx.screenheight);
         this.entities.unshift(p);
@@ -271,7 +279,7 @@ class Main {
 			    	this.locked = false;
 			    	Sound.play("blink");
 			    	for (enemy in this.enemies) {
-				    	if (Geom.overlap(this.player.x - Gfx.screenwidth, this.player.y, Gfx.screenwidth, 16, enemy.x, enemy.y, 16, 16)) {
+				    	if (Geom.overlap(this.player.x - Gfx.screenwidth, this.player.y, Gfx.screenwidth, this.player.h, enemy.x, enemy.y, enemy.w, enemy.h)) {
 				    		enemy.die();
 				    	}
 				    }
@@ -289,7 +297,7 @@ class Main {
 			    	this.locked = false;
 			    	Sound.play("blink");
 			    	for (enemy in this.enemies) {
-				    	if (Geom.overlap(this.player.x, this.player.y, Gfx.screenwidth, 16, enemy.x, enemy.y, 16, 16)) {
+				    	if (Geom.overlap(this.player.x, this.player.y, Gfx.screenwidth, this.player.h, enemy.x, enemy.y, enemy.w, enemy.h)) {
                 enemy.die();
 				    	}
 				    }
@@ -304,7 +312,7 @@ class Main {
     }
 
     for (enemy in this.enemies) {
-    	if (Geom.overlap(this.player.x, this.player.y, 16, 16, enemy.x, enemy.y, 16, 16)) {
+    	if (this.player.alive && Geom.overlap(this.player.x, this.player.y, this.player.w, this.player.h, enemy.x, enemy.y, enemy.w, enemy.h)) {
     		if (!this.invulnerable) {
           this.health -= 30;          
         }
