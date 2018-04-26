@@ -36,13 +36,22 @@ x- improve hitboxes
 
 - basic GUI, scenes
   - GUI plugin styling
+  - load GUI examples separately, try them out?
+    - figure out positioning, color, font at LEAST
 
 - upgrades/upgrade menu (or simple in-game powerup pickups?)
 	- delayed blast verticle laser (like 1 second after, at your old position)
 
 - boss!
   - circular beam weapon (damages with a certain radius) - forces you to back off
+  - gravity-effect summons projectiles to spiral in from without
+  - telegraphed target/hit attack
   - spawn enemies?
+
+- visuals
+  - feedback on collisions/bounce (damage effect, bounce effect ... maybe border highlight)
+  - animation states for jump, fall and BEAM, (and hit? ^^)
+  - blood (!?) particle effect to emphasize current damage state?
 
 */
 
