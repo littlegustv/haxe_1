@@ -95,6 +95,7 @@ class Main {
     Gfx.loadtiles("blob", 10, 10);
     Gfx.loadtiles("corn", 18, 18);
     Gfx.loadtiles("building", 32, 32);
+    Gfx.loadtiles("barn", 48, 48);
     Gfx.loadtiles("sky", 48, 28);
     Gfx.loadtiles("ground", 64, 13);
 		Gfx.clearcolor = Col.BLACK;
@@ -152,11 +153,15 @@ class Main {
 	    //this.entities.unshift(sky);
       
       var corn = new Raindrop.Entity(i * 18, Gfx.screenheight - 18);
-      new Raindrop.Animate(corn, "corn", 0.5);
+      new Raindrop.Animate(corn, "corn", 0.25);
       this.entities.unshift(corn);
       
     }
 
+    var barn = new Raindrop.Entity(Gfx.screenwidth - 96, Gfx.screenheight - 48);
+    new Raindrop.Animate(barn, "barn", 0.25);
+    this.entities.unshift(barn);
+    
 
     //Music.play("soundtrack");
   }
