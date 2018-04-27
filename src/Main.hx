@@ -65,6 +65,7 @@ class Main {
     
     if (Input.justpressed(Key.RIGHT)) {
       var g = this.togrid(this.player.x, this.player.y);
+      // var normal = ...
       // no barrier
       if (this.grid[g[0] + 1] != null && this.grid[g[0] + 1][g[1]] == 0) {
         // if floor
@@ -74,11 +75,15 @@ class Main {
         // otherwise, rotate
         else {
           this.player.x += 16;
-          this.player.y += 16;  
+          this.player.y += 16;
+          //this.player.angle ...
         }
       } else {
-        //this.player.angle 
+        //this.player.angle  ...
       }
+    }
+    if (Input.justpressed(Key.LEFT)) {
+      this.player.angle -= 90;
     }
   }
 }
