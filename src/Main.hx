@@ -6,6 +6,8 @@ class Main {
   var player:Raindrop.Entity;
   var grid = new Array();
 
+  var direction = [1, 0];
+
   var st:Float = 0.0;
 
   public function togrid(x:Float, y:Float) {
@@ -23,7 +25,10 @@ class Main {
       var row = new Array();
       this.grid.push(row);
       for (j in 0...20) {
-        var cell = Random.pick([0, 0, 0, 1]);
+        var cell = 0;
+        if (i > 5) {
+          cell = Random.pick([0, 0, 0, 1]);
+        }
         row.push(cell);
         if (cell == 1) {
           var tile = new Raindrop.Entity(i * 16, j * 16);
@@ -32,7 +37,7 @@ class Main {
 
           if (this.player == null && this.grid[i][j - 1] == 0) {
             this.player = new Raindrop.Entity(i * 16, (j - 1) * 16);
-            new Raindrop.Animate(this.player, "spider", 0.5);
+            new Raindrop.Animate(this.player, "spider", 0.25);
             this.entities.push(this.player);
           }
         }
@@ -67,20 +72,32 @@ class Main {
       var g = this.togrid(this.player.x, this.player.y);
       // var normal = ...
       // no barrier
-      if (this.grid[g[0] + 1] != null && this.grid[g[0] + 1][g[1]] == 0) {
-        // if floor
-        if (this.grid[g[0] + 1] != null && this.grid[g[0] + 1][g[1] + 1] == 1) {
+      
+      // need to add orientation (i.e. angle) as WELL as direction      
+      var normal = [this.direction[1], -1 * this.direction[0]];
+      if (this.grid[g[0] + this.direction[0]] != null && this.grid[g[0] + this.direction[0]][g[1] + this.direction[1]] == 0) {
+        // if floor (check negative normal?)
+        if (this.grid[g[0] + this.direction[0] - normal[0]] != null && this.grid[g[0] + this.direction[0] - normal[0]][g[1] + this.direction[1] - normal[1]] == 1) {
           this.player.x += 16;
+          trace('flat');
+          // direction is not changed
         }
         // otherwise, rotate
         else {
-          this.player.x += 16;
-          this.player.y += 16;
+          trace('outer');
+          this.player.x += (this.direction[0] - normal[0]) * 16;
+          this.player.y += (this.direction[1] - normal[1]) * 16;
+          this.direction = [-normal[0], -normal[1]];
+          //this.player.angle += 90; // this will be a problem - - > depends on direction, no?
           //this.player.angle ...
         }
       } else {
+        trace('inner');
+        //this.player.angle -= 90;
+        this.direction = [normal[0], normal[1]];
         //this.player.angle  ...
       }
+      trace('${this.direction[0]}, ${this.direction[1]}');
     }
     if (Input.justpressed(Key.LEFT)) {
       this.player.angle -= 90;
