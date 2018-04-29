@@ -8,7 +8,10 @@ class Main {
 
   var direction = [1, 0];
 
+  var turn:Int = 1;
+
   var st:Float = 0.0;
+  var time:Float = 0.0;
 
   public function togrid(x:Float, y:Float) {
     return [Math.floor(x / 16), Math.floor(y / 16)];
@@ -26,7 +29,7 @@ class Main {
       this.grid.push(row);
       for (j in 0...20) {
         var cell = 0;
-        if (i > 5) {
+        if (i >= 5 && i <= 15) {
           cell = Random.pick([0, 0, 0, 1]);
         }
         row.push(cell);
@@ -65,38 +68,57 @@ class Main {
       }
     }
 
-    // controls
-    
-    if (Input.justpressed(Key.RIGHT)) {
+
+    if (Input.justpressed(Key.SPACE)) {
+      //this.direction = [-this.direction[0], -this.direction[1]];
+      //this.turn *= -1;
+      var normal = [Math.round(Geom.cos(this.player.angle - 90)), Math.round(Geom.sin(this.player.angle - 90))];
+      var g = this.togrid(this.player.x, this.player.y);
+      for (i in 1...4) {
+        if (this.grid[g[0] + normal[0] * i] != null && this.grid[g[0] + normal[0] * i][g[1] + normal[1] * i] == 1) {
+          this.player.angle += 180;
+          this.player.x += (i - 1) * normal[0] * 16;
+          this.player.y += (i - 1) * normal[1] * 16;
+          this.turn *= -1;
+          break;
+        }
+      }
+    }
+
+    this.time += dt;
+    if /*(Input.justpressed(Key.ENTER)) {//*/(this.time > 0.25) {
+      this.time = 0;
       var g = this.togrid(this.player.x, this.player.y);
       // var normal = ...
       // no barrier
-      
       // need to add orientation (i.e. angle) as WELL as direction      
-      var normal = [this.direction[1], -1 * this.direction[0]];
+      var normal = [Math.round(Geom.cos(this.player.angle - 90)), Math.round(Geom.sin(this.player.angle - 90))];
+      //trace('${this.direction[0]}, ${this.direction[1]} :: ${normal[0]}, ${normal[1]} :: ${this.turn}');
       if (this.grid[g[0] + this.direction[0]] != null && this.grid[g[0] + this.direction[0]][g[1] + this.direction[1]] == 0) {
         // if floor (check negative normal?)
         if (this.grid[g[0] + this.direction[0] - normal[0]] != null && this.grid[g[0] + this.direction[0] - normal[0]][g[1] + this.direction[1] - normal[1]] == 1) {
-          this.player.x += 16;
-          trace('flat');
+          this.player.x += 16 * this.direction[0];
+          this.player.y += 16 * this.direction[1];
+          //trace('flat');
           // direction is not changed
         }
         // otherwise, rotate
         else {
-          trace('outer');
+          //trace('outer');
           this.player.x += (this.direction[0] - normal[0]) * 16;
           this.player.y += (this.direction[1] - normal[1]) * 16;
-          this.direction = [-normal[0], -normal[1]];
-          //this.player.angle += 90; // this will be a problem - - > depends on direction, no?
+          this.direction = [-1 * this.turn * this.direction[1], this.turn * this.direction[0]];
+          //this.direction = [-normal[0], -normal[1]];
+          this.player.angle += this.turn * 90; // this will be a problem - - > depends on direction, no?
           //this.player.angle ...
         }
       } else {
-        trace('inner');
-        //this.player.angle -= 90;
-        this.direction = [normal[0], normal[1]];
+        //trace('inner');
+        this.player.angle -= this.turn * 90;
+        this.direction = [this.turn * this.direction[1], -1 * this.turn * this.direction[0]];
+        //this.direction = [normal[0], normal[1]];
         //this.player.angle  ...
       }
-      trace('${this.direction[0]}, ${this.direction[1]}');
     }
     if (Input.justpressed(Key.LEFT)) {
       this.player.angle -= 90;
