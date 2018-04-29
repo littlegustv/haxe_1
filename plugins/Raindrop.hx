@@ -120,7 +120,8 @@ class Animate extends Behavior {
 		}
 	}
 	public override function draw () {
-		Gfx.drawtile(Math.round(this.entity.x), Math.round(this.entity.y), this.sprite, this.frame);      
+    Gfx.rotation(this.entity.angle, this.entity.w / 2, this.entity.h / 2);
+		Gfx.drawtile(Math.round(this.entity.x - this.entity.w / 2), Math.round(this.entity.y - this.entity.h / 2), this.sprite, this.frame);
 	}
 }
 class Tile extends Behavior {
@@ -254,16 +255,18 @@ class Entity {
   public var w:Int;
   public var h:Int;
   public var alpha:Float;
+  public var angle:Float;
   public var alive:Bool;
   var text:String;
   var callback:Raindrop.Entity->Void;
   var behaviors:Array<Behavior> = new Array();
-  public function new (x, y, ?w, ?h, ?callback:Raindrop.Entity->Void) {
+  public function new (x, y, ?w = 16, ?h = 16, ?angle = 0, ?callback:Raindrop.Entity->Void) {
     this.x = x;
     this.y = y;
     this.w = w;
     this.h = h;
     this.alpha = 1.0;
+    this.angle = angle;
     this.alive = true;
     this.callback = callback;
     //this.behaviors.push(new Animate(this, sprite, 0.1));
