@@ -12,7 +12,7 @@ class Main {
 
   var st:Float = 0.0;
   var time:Float = 0.0;
-  var interval:Float = 0.5;
+  var interval:Float = 0.25;
 
   var start = new Array();
   var goal = new Array();
@@ -26,7 +26,7 @@ class Main {
   function init(){
 
 		Gfx.clearcolor = Col.BLACK;
-    Gfx.loadtiles("spider", 16, 16);
+    Gfx.loadtiles("spider", 18, 16);
     Gfx.loadtiles("tile", 16, 16);
 
     this.grid = new Array();
@@ -48,7 +48,7 @@ class Main {
 
           if (this.player == null && this.grid[i][j - 1] == 0) {
             this.player = new Raindrop.Entity(i * 16, (j - 1) * 16);
-            new Raindrop.Animate(this.player, "spider", 0.25);
+            new Raindrop.Animate(this.player, "spider", 0.1);
             this.entities.push(this.player);
           }
         }
