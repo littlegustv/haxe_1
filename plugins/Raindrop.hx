@@ -12,6 +12,80 @@ class Behavior {
 	}
 }
 
+class Crawl extends Behavior {
+  var grid:Array<Array<Int>>;
+  var direction = [1, 0];
+  var turn:Int = 1;
+  var time:Float = 0.0;
+  var interval:Float = 0.5;
+  var start = new Array();
+  var goal = new Array();
+  public var jump:Bool = false;
+  public var pause:Bool = false;
+
+  public function new (entity, grid, interval) {
+    super(entity);
+    this.interval = interval;
+    this.grid = grid;
+    this.goal = [this.entity.x, this.entity.y, this.entity.angle];
+    this.start = [this.entity.x, this.entity.y, this.entity.angle];
+  }
+
+  public function togrid(x:Float, y:Float) {
+    return [Math.floor(x / 16), Math.floor(y / 16)];
+  }
+
+  public override function update(dt) {
+    this.time += dt;
+    if (this.time > this.interval) {
+      
+      // reset
+      this.time = 0;      
+      this.entity.x = this.goal[0];
+      this.entity.y = this.goal[1];
+      this.entity.angle = this.goal[2];
+      this.start = [this.entity.x, this.entity.y, this.entity.angle];
+      
+      var g = this.togrid(this.entity.x, this.entity.y);
+      var normal = [Math.round(Geom.cos(this.entity.angle - 90)), Math.round(Geom.sin(this.entity.angle - 90))];
+      
+      if (this.pause) {
+        // do nothing
+      }
+      else if (this.jump) {
+        for (i in 1...4) {
+          if (this.grid[g[0] + normal[0] * i] != null && this.grid[g[0] + normal[0] * i][g[1] + normal[1] * i] == 1) {
+            // JUMP
+            this.goal = [this.entity.x + (i - 1) * normal[0] * 16, this.entity.y + (i - 1) * normal[1] * 16, this.entity.angle + 180];
+            this.turn *= -1;
+            break;
+          }
+        }
+        this.jump = false;
+      } else if (this.grid[g[0] + this.direction[0]] != null && this.grid[g[0] + this.direction[0]][g[1] + this.direction[1]] == 0) {
+        if (this.grid[g[0] + this.direction[0] - normal[0]] != null && this.grid[g[0] + this.direction[0] - normal[0]][g[1] + this.direction[1] - normal[1]] == 1) {
+          // FLAT
+          this.goal = [this.entity.x + 16 * this.direction[0], this.entity.y + 16 * this.direction[1], this.entity.angle];
+        }
+        else {
+          // OUTER TURN
+          this.goal = [this.entity.x + 16 * (this.direction[0] - normal[0]), this.entity.y + 16 *(this.direction[1] - normal[1]),  this.entity.angle + this.turn * 90];
+          this.direction = [-1 * this.turn * this.direction[1], this.turn * this.direction[0]];
+        }
+      } else {
+        // INNER TURN
+        this.goal = [this.entity.x, this.entity.y, this.entity.angle - this.turn * 90];
+        this.direction = [this.turn * this.direction[1], -1 * this.turn * this.direction[0]];
+      }
+    } else {
+      this.entity.x = this.start[0] + (Math.round(2 * (this.time / this.interval)) / 2) * (this.goal[0] - this.start[0]);
+      this.entity.y = this.start[1] + (Math.round(2 * (this.time / this.interval)) / 2) * (this.goal[1] - this.start[1]);
+      this.entity.angle = this.start[2] + (Math.round(2 * (this.time / this.interval)) / 2) * (this.goal[2] - this.start[2]);
+    }
+  }
+
+}
+
 class Lerp extends Behavior {
   var time:Float;
   var rate:Float;
