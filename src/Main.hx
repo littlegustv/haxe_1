@@ -1,6 +1,22 @@
 import haxegon.*;
 
-class Main {
+class Menu {
+  function init () {
+
+  }
+
+  function update () {
+    if (Gui.button("Level1!")) {
+      Save.savevalue("level", 1);
+      Scene.change(Game);
+    } else if (Gui.button("Level2!")) {
+      Save.savevalue("level", 2);
+      Scene.change(Game);
+    }
+  }
+}
+
+class Game {
   var entities = new Array();
   var enemies = new Array();
   var player:Raindrop.Entity;
@@ -10,23 +26,26 @@ class Main {
   var crawl:Raindrop.Crawl;
 
   function init(){
+    this.entities = new Array();
+    this.enemies = new Array();
+    this.grid = new Array();
+    this.st = 0.0;
 
-		Gfx.clearcolor = Col.BLACK;
+    Gfx.clearcolor = Col.BLACK;
     Gfx.loadtiles("spider", 18, 16);
     Gfx.loadtiles("ghost", 16, 16);
     Gfx.loadtiles("tile", 16, 16);
 
-    var level1:Dynamic = Data.loadjson("level1.json");
+    var level:Dynamic = Data.loadjson('level${Save.loadvalue("level")}.json');
 
-    this.grid = new Array();
-    var height = level1.layers[1].height;
-    var width = level1.layers[1].width;
+    var height = level.layers[1].height;
+    var width = level.layers[1].width;
     
     for (i in 0...width) {
       var row = new Array();
       this.grid.push(row);
       for (j in 0...height) {
-        var cell = level1.layers[1].data[i + j * width];
+        var cell = level.layers[1].data[i + j * width];
         row.push(cell);
         if (cell != 0) {
           //trace(i, j, i + j * width);
@@ -37,14 +56,14 @@ class Main {
       }
     }
     
-    var playerinfo:Dynamic = level1.layers[3].objects[0];
+    var playerinfo:Dynamic = level.layers[3].objects[0];
     this.player = new Raindrop.Entity(playerinfo.x, playerinfo.y);
     new Raindrop.Animate(this.player, "spider", 0.1);
     this.entities.push(this.player);
-    this.crawl = new Raindrop.Crawl(this.player, this.grid, 0.5);
+    this.crawl = new Raindrop.Crawl(this.player, this.grid, 0.25);
 
-    for (i in 0...level1.layers[3].objects.length) {
-      var obj:Dynamic = level1.layers[3].objects[i];
+    for (i in 0...level.layers[3].objects.length) {
+      var obj:Dynamic = level.layers[3].objects[i];
       if (obj.name == "Enemy") {
         var e = new Raindrop.Entity(obj.x, obj.y);
         new Raindrop.Animate(e, "ghost", 0.1);
@@ -89,6 +108,19 @@ class Main {
       this.crawl.pause = false;
       this.crawl.jump = true;
     }
+
+    if (Gui.button("Menu")) {
+      Scene.change(Menu);
+    }
   }
 }
 
+class Main {
+  function init () {
+    Scene.change(Menu);
+  }
+
+  function update () {
+
+  }
+}
