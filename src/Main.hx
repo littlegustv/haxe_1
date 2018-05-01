@@ -16,41 +16,48 @@ class Main {
     Gfx.loadtiles("ghost", 16, 16);
     Gfx.loadtiles("tile", 16, 16);
 
-    var picked = false;
+    var level1:Dynamic = Data.loadjson("level1.json");
 
     this.grid = new Array();
-    for (i in 0...20) {
+    var height = level1.layers[1].height;
+    var width = level1.layers[1].width;
+    
+    for (i in 0...width) {
       var row = new Array();
       this.grid.push(row);
-      for (j in 0...20) {
-        var cell = 0;
-        //if (i >= 5 && i <= 15 && j == 5) {
-        if (i >= 5 && i <= 15) {
-          cell = Random.pick([0, 0, 0, 1]);
-          //cell = 1;
-        }
+      for (j in 0...height) {
+        var cell = level1.layers[1].data[i + j * width];
         row.push(cell);
-        if (cell == 1) {
+        if (cell != 0) {
+          //trace(i, j, i + j * width);
           var tile = new Raindrop.Entity(i * 16, j * 16);
           new Raindrop.Animate(tile, "tile", 1);
           this.entities.unshift(tile);
-
-          if (this.player == null && this.grid[i][j - 1] == 0) {
-            this.player = new Raindrop.Entity(i * 16, (j - 1) * 16);
-            new Raindrop.Animate(this.player, "spider", 0.1);
-            this.entities.push(this.player);
-          } else if (picked == false && this.grid[i][j - 1] == 0) {
-            var e = new Raindrop.Entity(i * 16, (j - 1) * 16);
-            new Raindrop.Animate(e, "ghost", 0.1);
-            new Raindrop.Crawl(e, this.grid, 0.5);
-            this.entities.push(e);
-            this.enemies.push(e);
-            picked = true;
-          }
         }
       }
-    }    
+    }
+    
+    var playerinfo:Dynamic = level1.layers[3].objects[0];
+    this.player = new Raindrop.Entity(playerinfo.x, playerinfo.y);
+    new Raindrop.Animate(this.player, "spider", 0.1);
+    this.entities.push(this.player);
     this.crawl = new Raindrop.Crawl(this.player, this.grid, 0.5);
+
+    for (i in 0...level1.layers[3].objects.length) {
+      var obj:Dynamic = level1.layers[3].objects[i];
+      if (obj.name == "Enemy") {
+        var e = new Raindrop.Entity(obj.x, obj.y);
+        new Raindrop.Animate(e, "ghost", 0.1);
+        //new Raindrop.Crawl(e, this.grid, 0.5);
+        this.entities.push(e);
+        this.enemies.push(e);        
+      }
+    }
+
+    /*
+    else if (picked == false && this.grid[i][j - 1] == 0) {
+    }
+    */
   }
  
   function update() {

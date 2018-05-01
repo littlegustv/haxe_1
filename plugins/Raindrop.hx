@@ -54,7 +54,7 @@ class Crawl extends Behavior {
       }
       else if (this.jump) {
         for (i in 1...4) {
-          if (this.grid[g[0] + normal[0] * i] != null && this.grid[g[0] + normal[0] * i][g[1] + normal[1] * i] == 1) {
+          if (this.grid[g[0] + normal[0] * i] != null && this.grid[g[0] + normal[0] * i][g[1] + normal[1] * i] != 0) {
             // JUMP
             this.goal = [this.entity.x + (i - 1) * normal[0] * 16, this.entity.y + (i - 1) * normal[1] * 16, this.entity.angle + 180];
             this.turn *= -1;
@@ -63,7 +63,7 @@ class Crawl extends Behavior {
         }
         this.jump = false;
       } else if (this.grid[g[0] + this.direction[0]] != null && this.grid[g[0] + this.direction[0]][g[1] + this.direction[1]] == 0) {
-        if (this.grid[g[0] + this.direction[0] - normal[0]] != null && this.grid[g[0] + this.direction[0] - normal[0]][g[1] + this.direction[1] - normal[1]] == 1) {
+        if (this.grid[g[0] + this.direction[0] - normal[0]] != null && this.grid[g[0] + this.direction[0] - normal[0]][g[1] + this.direction[1] - normal[1]] != 0) {
           // FLAT
           this.goal = [this.entity.x + 16 * this.direction[0], this.entity.y + 16 * this.direction[1], this.entity.angle];
         }
