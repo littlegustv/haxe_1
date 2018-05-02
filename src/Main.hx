@@ -56,11 +56,6 @@ class Game {
       }
     }
     
-    var playerinfo:Dynamic = level.layers[1].objects[0];
-    this.player = new Raindrop.Entity(playerinfo.x, playerinfo.y);
-    new Raindrop.Animate(this.player, "spider", 0.1);
-    this.entities.push(this.player);
-    this.crawl = new Raindrop.Crawl(this.player, this.grid, 0.25);
 
     for (i in 0...level.layers[1].objects.length) {
       var obj:Dynamic = level.layers[1].objects[i];
@@ -70,6 +65,11 @@ class Game {
         //new Raindrop.Crawl(e, this.grid, 0.5);
         this.entities.push(e);
         this.enemies.push(e);        
+      } else if (obj.name == "Player") {
+        this.player = new Raindrop.Entity(obj.x, obj.y);
+        new Raindrop.Animate(this.player, "spider", 0.1);
+        this.entities.push(this.player);
+        this.crawl = new Raindrop.Crawl(this.player, this.grid, 0.25);      
       }
     }
 
@@ -95,6 +95,12 @@ class Game {
     for (entity in this.entities) {
       if (!entity.alive) {
         this.entities.remove(entity);
+      }
+    }
+
+    for (enemy in this.enemies) {
+      if (Geom.overlap(this.player.x, this.player.y, this.player.w, this.player.h, enemy.x, enemy.y, enemy.w, enemy.h)) {
+        Scene.change(Game);
       }
     }
 
