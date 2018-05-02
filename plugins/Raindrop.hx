@@ -78,8 +78,11 @@ class Crawl extends Behavior {
         this.direction = [this.turn * this.direction[1], -1 * this.turn * this.direction[0]];
       }
     } else {
-      this.entity.x = this.start[0] + (Math.round(2 * (this.time / this.interval)) / 2) * (this.goal[0] - this.start[0]);
-      this.entity.y = this.start[1] + (Math.round(2 * (this.time / this.interval)) / 2) * (this.goal[1] - this.start[1]);
+      this.entity.x = this.start[0] + (this.time / this.interval) * (this.goal[0] - this.start[0]);
+      this.entity.y = this.start[1] + (this.time / this.interval) * (this.goal[1] - this.start[1]);
+      
+      //this.entity.x = this.start[0] + (Math.round(2 * (this.time / this.interval)) / 2) * (this.goal[0] - this.start[0]);
+      //this.entity.y = this.start[1] + (Math.round(2 * (this.time / this.interval)) / 2) * (this.goal[1] - this.start[1]);
       this.entity.angle = this.start[2] + (Math.round(2 * (this.time / this.interval)) / 2) * (this.goal[2] - this.start[2]);
     }
   }

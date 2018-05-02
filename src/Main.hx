@@ -38,14 +38,14 @@ class Game {
 
     var level:Dynamic = Data.loadjson('level${Save.loadvalue("level")}.json');
 
-    var height = level.layers[1].height;
-    var width = level.layers[1].width;
+    var height = level.layers[0].height;
+    var width = level.layers[0].width;
     
     for (i in 0...width) {
       var row = new Array();
       this.grid.push(row);
       for (j in 0...height) {
-        var cell = level.layers[1].data[i + j * width];
+        var cell = level.layers[0].data[i + j * width];
         row.push(cell);
         if (cell != 0) {
           //trace(i, j, i + j * width);
@@ -56,14 +56,14 @@ class Game {
       }
     }
     
-    var playerinfo:Dynamic = level.layers[3].objects[0];
+    var playerinfo:Dynamic = level.layers[1].objects[0];
     this.player = new Raindrop.Entity(playerinfo.x, playerinfo.y);
     new Raindrop.Animate(this.player, "spider", 0.1);
     this.entities.push(this.player);
     this.crawl = new Raindrop.Crawl(this.player, this.grid, 0.25);
 
-    for (i in 0...level.layers[3].objects.length) {
-      var obj:Dynamic = level.layers[3].objects[i];
+    for (i in 0...level.layers[1].objects.length) {
+      var obj:Dynamic = level.layers[1].objects[i];
       if (obj.name == "Enemy") {
         var e = new Raindrop.Entity(obj.x, obj.y);
         new Raindrop.Animate(e, "ghost", 0.1);
@@ -98,11 +98,13 @@ class Game {
       }
     }
 
+    /*Layer.move(
+      "foreground", 
+      Layer.getx("foreground") + ((Gfx.screenwidth / 2 - this.player.x) - Layer.getx("foreground")) * dt, 
+      Layer.gety("foreground") + ((Gfx.screenheight / 2 - this.player.y) - Layer.gety("foreground")) * dt);*/
 
     if (Input.justpressed(Key.SPACE)) {
       this.crawl.pause = true;
-      //this.direction = [-this.direction[0], -this.direction[1]];
-      //this.turn *= -1;
     }
     if (Input.justreleased(Key.SPACE)) {
       this.crawl.pause = false;
