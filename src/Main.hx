@@ -19,6 +19,8 @@ class Menu {
 class Game {
   var entities = new Array();
   var enemies = new Array();
+  var switches = new Array();
+
   var player:Raindrop.Entity;
   var grid = new Array();
   var st:Float = 0.0;
@@ -27,6 +29,7 @@ class Game {
 
   function init(){
     this.entities = new Array();
+    this.switches = new Array();
     this.enemies = new Array();
     this.grid = new Array();
     this.st = 0.0;
@@ -34,7 +37,9 @@ class Game {
     Gfx.clearcolor = Col.BLACK;
     Gfx.loadtiles("spider", 18, 16);
     Gfx.loadtiles("ghost", 16, 16);
+    Gfx.loadtiles("door", 16, 16);
     Gfx.loadtiles("tile", 16, 16);
+    Gfx.loadtiles("spikes", 16, 16);
 
     var level:Dynamic = Data.loadjson('level${Save.loadvalue("level")}.json');
 
@@ -61,15 +66,26 @@ class Game {
       var obj:Dynamic = level.layers[1].objects[i];
       if (obj.name == "Enemy") {
         var e = new Raindrop.Entity(obj.x, obj.y);
-        new Raindrop.Animate(e, "ghost", 0.1);
-        //new Raindrop.Crawl(e, this.grid, 0.5);
+        e.angle = obj.properties.angle;
+        if (obj.properties.directionx != null && obj.properties.directiony != null && obj.properties.turn != null) {
+          new Raindrop.Crawl(e, this.grid, 0.5, [obj.properties.directionx, obj.properties.directiony], obj.properties.turn);          
+          new Raindrop.Animate(e, "ghost", 0.1);
+        } else {
+          new Raindrop.Animate(e, "spikes", 0.4);
+        }
         this.entities.push(e);
-        this.enemies.push(e);        
+        this.enemies.push(e);
       } else if (obj.name == "Player") {
         this.player = new Raindrop.Entity(obj.x, obj.y);
         new Raindrop.Animate(this.player, "spider", 0.1);
         this.entities.push(this.player);
-        this.crawl = new Raindrop.Crawl(this.player, this.grid, 0.25);      
+        this.crawl = new Raindrop.Crawl(this.player, this.grid, 0.25, [obj.properties.directionx, obj.properties.directiony], obj.properties.turn);
+      } else if (obj.name == "Exit") {
+        var e = new Raindrop.Entity(obj.x, obj.y);
+        e.angle = obj.properties.angle;
+        new Raindrop.Animate(e, "door", 0.5);
+        this.entities.push(e);
+        this.switches.push(e);
       }
     }
 
@@ -100,6 +116,13 @@ class Game {
 
     for (enemy in this.enemies) {
       if (Geom.overlap(this.player.x, this.player.y, this.player.w, this.player.h, enemy.x, enemy.y, enemy.w, enemy.h)) {
+        Scene.change(Game);
+      }
+    }
+
+    for (s in this.switches) {
+      if (Geom.overlap(this.player.x, this.player.y, this.player.w, this.player.h, s.x, s.y, s.w, s.h)) {
+        Save.savevalue("level", 2);
         Scene.change(Game);
       }
     }

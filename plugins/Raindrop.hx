@@ -23,12 +23,16 @@ class Crawl extends Behavior {
   public var jump:Bool = false;
   public var pause:Bool = false;
 
-  public function new (entity, grid, interval) {
+  public function new (entity, grid, interval, ?direction:Array<Int>, ?turn:Int = 1) {
     super(entity);
     this.interval = interval;
     this.grid = grid;
     this.goal = [this.entity.x, this.entity.y, this.entity.angle];
     this.start = [this.entity.x, this.entity.y, this.entity.angle];
+    if (direction != null){
+      this.direction = direction;      
+    }
+    this.turn = turn;
   }
 
   public function togrid(x:Float, y:Float) {
@@ -39,6 +43,10 @@ class Crawl extends Behavior {
     this.time += dt;
     if (this.time > this.interval) {
       
+      if (this.pause) {
+        // do nothing
+        return;
+      }
       // reset
       this.time = 0;      
       this.entity.x = this.goal[0];
@@ -49,10 +57,7 @@ class Crawl extends Behavior {
       var g = this.togrid(this.entity.x, this.entity.y);
       var normal = [Math.round(Geom.cos(this.entity.angle - 90)), Math.round(Geom.sin(this.entity.angle - 90))];
       
-      if (this.pause) {
-        // do nothing
-      }
-      else if (this.jump) {
+      if (this.jump) {
         for (i in 1...4) {
           if (this.grid[g[0] + normal[0] * i] != null && this.grid[g[0] + normal[0] * i][g[1] + normal[1] * i] != 0) {
             // JUMP
@@ -80,10 +85,10 @@ class Crawl extends Behavior {
     } else {
       this.entity.x = this.start[0] + (this.time / this.interval) * (this.goal[0] - this.start[0]);
       this.entity.y = this.start[1] + (this.time / this.interval) * (this.goal[1] - this.start[1]);
-      
+      this.entity.angle = this.start[2] + (this.time / this.interval) * (this.goal[2] - this.start[2]);
       //this.entity.x = this.start[0] + (Math.round(2 * (this.time / this.interval)) / 2) * (this.goal[0] - this.start[0]);
       //this.entity.y = this.start[1] + (Math.round(2 * (this.time / this.interval)) / 2) * (this.goal[1] - this.start[1]);
-      this.entity.angle = this.start[2] + (Math.round(2 * (this.time / this.interval)) / 2) * (this.goal[2] - this.start[2]);
+      //this.entity.angle = this.start[2] + (Math.round(2 * (this.time / this.interval)) / 2) * (this.goal[2] - this.start[2]);
     }
   }
 
