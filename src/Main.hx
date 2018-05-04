@@ -1,8 +1,21 @@
+/*
+
+TODO:
+ - remaining layer issues (fewer now!!)
+ - tilemap loading; more robust (get solid, object layers by 'name' instead of index)
+ - skippable death animation
+ - levels!
+
+ - direction indicators?
+ - try android export??
+
+ */
+
 import haxegon.*;
 
 class Menu {
   function init () {
-
+    Gfx.clearcolor = Col.BLACK;
   }
 
   function update () {
@@ -34,12 +47,15 @@ class Game {
     this.grid = new Array();
     this.st = 0.0;
 
-    Gfx.clearcolor = Col.BLACK;
+    // fix me: seem to need to manually clear (using 'fillbox') per-layer, but that lets previous scenes bleed through?
+    Gfx.clearcolor = Col.TRANSPARENT;
+    
     Gfx.loadtiles("spider", 18, 16);
     Gfx.loadtiles("ghost", 16, 16);
     Gfx.loadtiles("door", 16, 16);
     Gfx.loadtiles("tile", 16, 16);
     Gfx.loadtiles("spikes", 16, 16);
+
 
     var level:Dynamic = Data.loadjson('level${Save.loadvalue("level")}.json');
 
@@ -61,6 +77,11 @@ class Game {
       }
     }
     
+    Layer.create("foreground", width * 16, height * 16);
+    Layer.attach("foreground");
+
+    Layer.create("ui");
+    Layer.attach("ui");
 
     for (i in 0...level.layers[1].objects.length) {
       var obj:Dynamic = level.layers[1].objects[i];
@@ -100,6 +121,15 @@ class Game {
     var dt:Float = Math.min(nt - this.st, 1.0 / 30); // cap at 30 frames per second ... what will this do, I wonder?
     this.st = nt;
 
+    Layer.move(
+      "foreground", 
+      Layer.getx("foreground") + ((Gfx.screenwidth / 2 - this.player.x) - Layer.getx("foreground")) * dt, 
+      Layer.gety("foreground") + ((Gfx.screenheight / 2 - this.player.y) - Layer.gety("foreground")) * dt);
+    /*
+    */
+
+    Layer.drawto("foreground");
+    Gfx.fillbox(0, 0, Layer.width("foreground"), Layer.height("foreground"), Col.BLACK);
     for (entity in this.entities) {
       entity.draw();
     }
@@ -127,11 +157,6 @@ class Game {
       }
     }
 
-    /*Layer.move(
-      "foreground", 
-      Layer.getx("foreground") + ((Gfx.screenwidth / 2 - this.player.x) - Layer.getx("foreground")) * dt, 
-      Layer.gety("foreground") + ((Gfx.screenheight / 2 - this.player.y) - Layer.gety("foreground")) * dt);*/
-
     if (Input.justpressed(Key.SPACE)) {
       this.crawl.pause = true;
     }
@@ -139,6 +164,8 @@ class Game {
       this.crawl.pause = false;
       this.crawl.jump = true;
     }
+    
+    Layer.drawto("ui");
 
     if (Gui.button("Menu")) {
       Scene.change(Menu);
