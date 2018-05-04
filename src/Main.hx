@@ -15,10 +15,17 @@ import haxegon.*;
 
 class Menu {
   function init () {
+    Text.setfont("titan", 16);
+    Text.align = Text.CENTER;
+    Gui.setfont("titan", 12);
+    Gui.style.button = Col.RED;
+    Gui.style.border = Col.WHITE;
+    Gui.style.highlight = Col.PINK;
     Gfx.clearcolor = Col.BLACK;
   }
 
   function update () {
+    Text.display(Gfx.screenwidth / 2, Gfx.screenheight / 2, "Arachno-Communist");
     if (Gui.button("Level1!")) {
       Save.savevalue("level", 1);
       Scene.change(Game);
