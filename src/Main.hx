@@ -21,10 +21,24 @@ class Menu {
     Gui.style.button = Col.RED;
     Gui.style.border = Col.WHITE;
     Gui.style.highlight = Col.PINK;
-    Gfx.clearcolor = Col.BLACK;
+    //Gfx.clearcolor = Col.BLACK;
+    Layer.attach("bg");
+  }
+
+  function reset() {
+    var layers = Layer.getlayers();
+    trace(layers);
+    for (l in layers) {
+      if (l != "screen") {
+        Layer.detach(l);
+      }
+    }
+    Layer.attach("bg");
   }
 
   function update () {
+    Layer.drawto("bg");
+    Gfx.clearscreen(Col.BLACK);
     Text.display(Gfx.screenwidth / 2, Gfx.screenheight / 2, "Arachno-Communist");
     if (Gui.button("Level1!")) {
       Save.savevalue("level", 1);
@@ -32,7 +46,7 @@ class Menu {
     } else if (Gui.button("Level2!")) {
       Save.savevalue("level", 2);
       Scene.change(Game);
-    }
+    } 
   }
 }
 
@@ -84,10 +98,17 @@ class Game {
       }
     }
     
-    Layer.create("foreground", width * 16, height * 16);
+    var layers = Layer.getlayers();
+    for (l in layers) {
+      if (l != "screen") {
+        Layer.detach(l);
+      }
+    }
+
+    Layer.attach("bg");
+
     Layer.attach("foreground");
 
-    Layer.create("ui");
     Layer.attach("ui");
 
     for (i in 0...level.layers[1].objects.length) {
@@ -127,6 +148,9 @@ class Game {
     var nt:Float = Core.time;
     var dt:Float = Math.min(nt - this.st, 1.0 / 30); // cap at 30 frames per second ... what will this do, I wonder?
     this.st = nt;
+
+    Layer.drawto("bg");
+    Gfx.fillbox(0, 0, Gfx.screenwidth, Gfx.screenheight, Col.BLACK);
 
     Layer.move(
       "foreground", 
@@ -182,6 +206,10 @@ class Game {
 
 class Main {
   function init () {
+    Layer.create("bg");
+    Layer.create("foreground", 40 * 16, 80 * 16);
+    Layer.create("ui");
+
     Scene.change(Menu);
   }
 
