@@ -1,12 +1,13 @@
 /*
 
 TODO:
- - remaining layer issues (fewer now!!)
- - tilemap loading; more robust (get solid, object layers by 'name' instead of index)
+x - remaining layer issues (fewer now!!)
+x- tilemap loading; more robust (get solid, object layers by 'name' instead of index)
  - skippable death animation
  - levels!
+ - less wobbly camera, bound to game map size
 
- - direction indicators?
+ - direction, jump indicators, way to cancel jump
  - try android export??
 
  */
@@ -76,27 +77,10 @@ class Game {
     Gfx.loadtiles("door", 16, 16);
     Gfx.loadtiles("tile", 16, 16);
     Gfx.loadtiles("spikes", 16, 16);
+    Gfx.loadtiles("tileset", 16, 16);
 
 
     var level:Dynamic = Data.loadjson('level${Save.loadvalue("level")}.json');
-
-    var height = level.layers[0].height;
-    var width = level.layers[0].width;
-    
-    for (i in 0...width) {
-      var row = new Array();
-      this.grid.push(row);
-      for (j in 0...height) {
-        var cell = level.layers[0].data[i + j * width];
-        row.push(cell);
-        if (cell != 0) {
-          //trace(i, j, i + j * width);
-          var tile = new Raindrop.Entity(i * 16, j * 16);
-          new Raindrop.Animate(tile, "tile", 1);
-          this.entities.unshift(tile);
-        }
-      }
-    }
     
     var layers = Layer.getlayers();
     for (l in layers) {
@@ -111,32 +95,60 @@ class Game {
 
     Layer.attach("ui");
 
-    for (i in 0...level.layers[1].objects.length) {
-      var obj:Dynamic = level.layers[1].objects[i];
-      if (obj.name == "Enemy") {
-        var e = new Raindrop.Entity(obj.x, obj.y);
-        e.angle = obj.properties.angle;
-        if (obj.properties.directionx != null && obj.properties.directiony != null && obj.properties.turn != null) {
-          new Raindrop.Crawl(e, this.grid, 0.5, [obj.properties.directionx, obj.properties.directiony], obj.properties.turn);          
-          new Raindrop.Animate(e, "ghost", 0.1);
-        } else {
-          new Raindrop.Animate(e, "spikes", 0.4);
+    for (n in 0...level.layers.length) {
+      if (level.layers[n].name == "Solids") {
+        var height = level.layers[n].height;
+        var width = level.layers[n].width;
+        
+        for (i in 0...width) {
+          var row = new Array();
+          this.grid.push(row);
+          for (j in 0...height) {
+            var cell = level.layers[n].data[i + j * width];
+            row.push(cell);
+            if (cell != 0) {
+              //trace(i, j, i + j * width);
+              var tile = new Raindrop.Entity(i * 16, j * 16);
+              new Raindrop.Animate(tile, "tile", 1);
+              this.entities.push(tile);
+            }
+          }
         }
-        this.entities.push(e);
-        this.enemies.push(e);
-      } else if (obj.name == "Player") {
-        this.player = new Raindrop.Entity(obj.x, obj.y);
-        new Raindrop.Animate(this.player, "spider", 0.1);
-        this.entities.push(this.player);
-        this.crawl = new Raindrop.Crawl(this.player, this.grid, 0.25, [obj.properties.directionx, obj.properties.directiony], obj.properties.turn);
-      } else if (obj.name == "Exit") {
-        var e = new Raindrop.Entity(obj.x, obj.y);
-        e.angle = obj.properties.angle;
-        new Raindrop.Animate(e, "door", 0.5);
-        this.entities.push(e);
-        this.switches.push(e);
+      } else if (level.layers[n].name == "Objects") {
+        for (i in 0...level.layers[n].objects.length) {
+          var obj:Dynamic = level.layers[n].objects[i];
+          if (obj.name == "Enemy") {
+            var e = new Raindrop.Entity(obj.x, obj.y);
+            e.angle = obj.properties.angle;
+            if (obj.properties.directionx != null && obj.properties.directiony != null && obj.properties.turn != null) {
+              new Raindrop.Crawl(e, this.grid, 0.5, [obj.properties.directionx, obj.properties.directiony], obj.properties.turn);          
+              new Raindrop.Animate(e, "ghost", 0.1);
+            } else {
+              new Raindrop.Animate(e, "spikes", 0.4);
+            }
+            this.entities.push(e);
+            this.enemies.push(e);
+          } else if (obj.name == "Player") {
+            this.player = new Raindrop.Entity(obj.x, obj.y);
+            new Raindrop.Animate(this.player, "spider", 0.1);
+            this.entities.push(this.player);
+            this.crawl = new Raindrop.Crawl(this.player, this.grid, 0.25, [obj.properties.directionx, obj.properties.directiony], obj.properties.turn);
+          } else if (obj.name == "Exit") {
+            var e = new Raindrop.Entity(obj.x, obj.y);
+            e.angle = obj.properties.angle;
+            new Raindrop.Animate(e, "door", 0.5);
+            this.entities.push(e);
+            this.switches.push(e);
+          }
+        }
+      } else {
+        var e = new Raindrop.Entity(-4, -4);
+        new Raindrop.TileMap(e, level.layers[n], "tileset", level.layers[n].name);
+        this.entities.unshift(e);
       }
     }
+
+
 
     /*
     else if (picked == false && this.grid[i][j - 1] == 0) {
@@ -150,7 +162,7 @@ class Game {
     this.st = nt;
 
     Layer.drawto("bg");
-    Gfx.fillbox(0, 0, Gfx.screenwidth, Gfx.screenheight, Col.BLACK);
+    Gfx.fillbox(0, 0, Gfx.screenwidth, Gfx.screenheight, 0xEC3232);
 
     Layer.move(
       "foreground", 
@@ -160,7 +172,7 @@ class Game {
     */
 
     Layer.drawto("foreground");
-    Gfx.fillbox(0, 0, Layer.width("foreground"), Layer.height("foreground"), Col.BLACK);
+    Gfx.fillbox(0, 0, Layer.width("foreground"), Layer.height("foreground"), 0xEC3232);
     for (entity in this.entities) {
       entity.draw();
     }

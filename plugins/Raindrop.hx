@@ -206,6 +206,38 @@ class Animate extends Behavior {
 		Gfx.drawtile(Math.round(this.entity.x - this.entity.w / 2), Math.round(this.entity.y - this.entity.h / 2), this.sprite, this.frame);
 	}
 }
+
+class TileMap extends Behavior {
+	var map:Array<Int>;
+	var tileset:String;
+	var sprite:String;
+	var h:Int;
+	var w:Int;
+	public function new (entity, data, tileset, name) {
+		super(entity);
+		this.tileset = tileset;
+		this.map = data.data;
+		this.w = data.width;
+		this.h = data.height;
+		this.sprite = name;
+		Gfx.createimage(name, this.w * 16, this.h * 16);
+		Gfx.drawtoimage(name);
+		Gfx.imagealpha = data.opacity;
+		for (i in 0...this.w) {
+			for (j in 0...this.h) {
+				if (this.map[i + j * this.w] > 0) {
+					Gfx.drawtile(this.entity.x + i * 16, this.entity.y + j * 16, this.tileset, this.map[i + j * this.w] - 1);
+				}
+			}
+		}
+		Gfx.resetalpha();
+		Gfx.drawtoscreen();
+	}
+	public override function draw () {
+		Gfx.drawimage(this.entity.x, this.entity.y, this.sprite);
+	}
+}
+
 class Tile extends Behavior {
 	public var sprite:String;
 	var w:Int;
