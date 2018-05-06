@@ -2,7 +2,7 @@ import haxegon.*;
 
 class Behavior {
 	var entity:Entity;
-	public function new (entity) {
+	public function new (entity, ?update:Float->Void) {
 		this.entity = entity;
 		this.entity.add_behavior(this);
 	}
@@ -43,23 +43,24 @@ class Crawl extends Behavior {
     this.time += dt;
     if (this.time > this.interval) {
       
+      // reset
+      this.entity.x = this.goal[0];
+      this.entity.y = this.goal[1];
+      this.entity.angle = this.goal[2];
       if (this.pause) {
         // do nothing
         return;
       }
-      // reset
-      this.time = 0;      
-      this.entity.x = this.goal[0];
-      this.entity.y = this.goal[1];
-      this.entity.angle = this.goal[2];
+      
       this.start = [this.entity.x, this.entity.y, this.entity.angle];
+      this.time = 0;      
       
       var g = this.togrid(this.entity.x, this.entity.y);
       var normal = [Math.round(Geom.cos(this.entity.angle - 90)), Math.round(Geom.sin(this.entity.angle - 90))];
       
       if (this.jump) {
         for (i in 1...4) {
-          if (this.grid[g[0] + normal[0] * i] != null && this.grid[g[0] + normal[0] * i][g[1] + normal[1] * i] != 0) {
+          if (this.grid[g[0] + normal[0] * i] != null && this.grid[g[0] + normal[0] * i][g[1] + normal[1] * i] != 0 && this.grid[g[0] + normal[0] * i][g[1] + normal[1] * i] != null) {
             // JUMP
             this.goal = [this.entity.x + (i - 1) * normal[0] * 16, this.entity.y + (i - 1) * normal[1] * 16, this.entity.angle + 180];
             this.turn *= -1;
@@ -89,6 +90,23 @@ class Crawl extends Behavior {
       //this.entity.x = this.start[0] + (Math.round(2 * (this.time / this.interval)) / 2) * (this.goal[0] - this.start[0]);
       //this.entity.y = this.start[1] + (Math.round(2 * (this.time / this.interval)) / 2) * (this.goal[1] - this.start[1]);
       //this.entity.angle = this.start[2] + (Math.round(2 * (this.time / this.interval)) / 2) * (this.goal[2] - this.start[2]);
+    }
+  }
+
+  public override function draw () {
+    if (this.pause) {
+      var g = this.togrid(this.goal[0], this.goal[1]);
+      var normal = [Math.round(Geom.cos(this.goal[2] - 90)), Math.round(Geom.sin(this.goal[2] - 90))];
+      for (i in 1...4) {
+        if (this.grid[g[0] + normal[0] * i] != null && this.grid[g[0] + normal[0] * i][g[1] + normal[1] * i] != null && this.grid[g[0] + normal[0] * i][g[1] + normal[1] * i] != 0) {
+          //Gfx.drawbox(this.entity.x + normal[0] * (i - 1) * 16 - 8, this.entity.y + normal[1] * (i - 1) * 16 - 8, 16, 16, Col.GREEN);
+          Gfx.rotation(Geom.atan2(this.direction[1], this.direction[0]) + 90, 8, 8);
+          Gfx.drawtile(this.goal[0] + normal[0] * (i - 1) * 16 - 8, this.goal[1] + normal[1] * (i - 1) * 16 - 8, "indicators", 0);
+          
+          return;
+        }
+      }
+      Gfx.drawtile(this.goal[0] + normal[0] * 16 - 8, this.goal[1] + normal[1] * 16 - 8, "indicators", 1);
     }
   }
 
@@ -177,12 +195,13 @@ class TextBox extends Behavior {
 }
 
 class Animate extends Behavior {
-	var frame:Int = 0;
-	var frames:Int;
-	var speed:Float;
-	var time:Float = 0;
-	public var sprite:String;
+  var frames:Int;
+  var speed:Float;
+  var time:Float = 0;
 	var remove:Bool;
+  var frame:Int = 0;
+  var paused:Bool = false;
+  public var sprite:String;
 	public function new (entity, sprite, speed, remove:Bool = false) {
 		super(entity);
 		this.sprite = sprite;
@@ -191,7 +210,8 @@ class Animate extends Behavior {
 		this.remove = remove;
 	}
 	public override function update (dt:Float) {
-		this.time += dt;
+		if (this.paused) return;
+    this.time += dt;
 		if (this.time >= this.speed) {
 			this.time = 0;
 			this.frame = this.frame + 1;
@@ -205,6 +225,17 @@ class Animate extends Behavior {
     Gfx.rotation(this.entity.angle, this.entity.w / 2, this.entity.h / 2);
 		Gfx.drawtile(Math.round(this.entity.x - this.entity.w / 2), Math.round(this.entity.y - this.entity.h / 2), this.sprite, this.frame);
 	}
+  public function stop() {
+    this.frame = 0;
+    this.paused = true;
+    this.time = 0;
+  }
+  public function resume() {
+    this.paused = false;
+  }
+  public function pause () {
+    this.paused = true;
+  }
 }
 
 class TileMap extends Behavior {
@@ -374,7 +405,7 @@ class Entity {
   var text:String;
   var callback:Raindrop.Entity->Void;
   var behaviors:Array<Behavior> = new Array();
-  public function new (x, y, ?w = 16, ?h = 16, ?angle = 0, ?callback:Raindrop.Entity->Void) {
+  public function new (x:Float, y:Float, ?w:Int = 16, ?h:Int = 16, ?angle:Float = 0, ?callback:Raindrop.Entity->Void) {
     this.x = x;
     this.y = y;
     this.w = w;

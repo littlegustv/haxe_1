@@ -7,7 +7,8 @@ x- tilemap loading; more robust (get solid, object layers by 'name' instead of i
  - levels!
  - less wobbly camera, bound to game map size
 
- - direction, jump indicators, way to cancel jump
+x- direction, jump indicators
+x- way to cancel jump
  - try android export??
 
  */
@@ -57,6 +58,7 @@ class Game {
   var switches = new Array();
 
   var player:Raindrop.Entity;
+  var animate:Raindrop.Animate;
   var grid = new Array();
   var st:Float = 0.0;
 
@@ -78,6 +80,7 @@ class Game {
     Gfx.loadtiles("tile", 16, 16);
     Gfx.loadtiles("spikes", 16, 16);
     Gfx.loadtiles("tileset", 16, 16);
+    Gfx.loadtiles("indicators", 16, 16);
 
 
     var level:Dynamic = Data.loadjson('level${Save.loadvalue("level")}.json');
@@ -130,7 +133,7 @@ class Game {
             this.enemies.push(e);
           } else if (obj.name == "Player") {
             this.player = new Raindrop.Entity(obj.x, obj.y);
-            new Raindrop.Animate(this.player, "spider", 0.1);
+            this.animate = new Raindrop.Animate(this.player, "spider", 0.1);
             this.entities.push(this.player);
             this.crawl = new Raindrop.Crawl(this.player, this.grid, 0.25, [obj.properties.directionx, obj.properties.directiony], obj.properties.turn);
           } else if (obj.name == "Exit") {
@@ -166,7 +169,7 @@ class Game {
 
     Layer.move(
       "foreground", 
-      Layer.getx("foreground") + ((Gfx.screenwidth / 2 - this.player.x) - Layer.getx("foreground")) * dt, 
+      Math.min(0, Layer.getx("foreground") + ((Gfx.screenwidth / 2 - this.player.x) - Layer.getx("foreground")) * dt), 
       Layer.gety("foreground") + ((Gfx.screenheight / 2 - this.player.y) - Layer.gety("foreground")) * dt);
     /*
     */
@@ -188,8 +191,9 @@ class Game {
     }
 
     for (enemy in this.enemies) {
-      if (Geom.overlap(this.player.x, this.player.y, this.player.w, this.player.h, enemy.x, enemy.y, enemy.w, enemy.h)) {
+      if (Geom.overlap(this.player.x + 2, this.player.y + 2, this.player.w - 4, this.player.h - 4, enemy.x + 2, enemy.y + 2, enemy.w - 4, enemy.h - 4)) {
         Scene.change(Game);
+        break;
       }
     }
 
@@ -200,15 +204,31 @@ class Game {
       }
     }
 
-    if (Input.justpressed(Key.SPACE)) {
-      this.crawl.pause = true;
-    }
-    if (Input.justreleased(Key.SPACE)) {
-      this.crawl.pause = false;
-      this.crawl.jump = true;
-    }
-    
     Layer.drawto("ui");
+
+    if (Input.justpressed(Key.SPACE) || Mouse.leftheld()) {
+      this.crawl.pause = true;
+      this.animate.stop();
+    }
+    if (this.crawl.pause) {
+      if (Input.pressed(Key.SPACE)) {
+
+      } else {
+        //Text.display(Gfx.screenwidth / 2, Gfx.screenheight / 2 - 24, "Cancel", Col.WHITE, 0.6);
+        //Text.display(Gfx.screenwidth / 2, Gfx.screenheight / 2 + 24, "Jump!", Col.PINK, 0.6);
+      }
+
+      if (Input.justreleased(Key.SPACE) || (Mouse.leftreleased() && Mouse.y >= Gfx.screenheight / 2)) {
+        this.crawl.pause = false;
+        this.crawl.jump = true;
+        this.animate.resume();
+      }
+      if (Input.justreleased(Key.ESCAPE) || (Mouse.leftreleased() && Mouse.y <= Gfx.screenheight / 2)) {
+        this.crawl.pause = false;
+        this.animate.resume();
+      }
+    } 
+    
 
     if (Gui.button("Menu")) {
       Scene.change(Menu);
