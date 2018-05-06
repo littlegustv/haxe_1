@@ -82,7 +82,6 @@ class Game {
     Gfx.loadtiles("tileset", 16, 16);
     Gfx.loadtiles("indicators", 16, 16);
 
-
     var level:Dynamic = Data.loadjson('level${Save.loadvalue("level")}.json');
     
     var layers = Layer.getlayers();

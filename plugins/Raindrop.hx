@@ -63,7 +63,7 @@ class Crawl extends Behavior {
           if (this.grid[g[0] + normal[0] * i] != null && this.grid[g[0] + normal[0] * i][g[1] + normal[1] * i] != 0 && this.grid[g[0] + normal[0] * i][g[1] + normal[1] * i] != null) {
             // JUMP
             this.goal = [this.entity.x + (i - 1) * normal[0] * 16, this.entity.y + (i - 1) * normal[1] * 16, this.entity.angle + 180];
-            this.turn *= -1;
+            this.turn *= -1;            
             break;
           }
         }
@@ -265,7 +265,8 @@ class TileMap extends Behavior {
 		Gfx.drawtoscreen();
 	}
 	public override function draw () {
-		Gfx.drawimage(this.entity.x, this.entity.y, this.sprite);
+		Gfx.rotation(0);
+    Gfx.drawimage(this.entity.x, this.entity.y, this.sprite);
 	}
 }
 
