@@ -3,7 +3,8 @@
 TODO:
 x - remaining layer issues (fewer now!!)
 x- tilemap loading; more robust (get solid, object layers by 'name' instead of index)
- - skippable death animation
+x- skippable death animation
+ - somehow implement generic tweening function (any field, multiple transition functions)
  - levels!
  - less wobbly camera, bound to game map size
 
@@ -17,6 +18,10 @@ import haxegon.*;
 
 class Menu {
   function init () {
+    Music.play("music");
+    Sound.load("jump");
+    Sound.load("land");
+
     Text.setfont("titan", 16);
     Text.align = Text.CENTER;
     Gui.setfont("titan", 12);
@@ -81,6 +86,7 @@ class Game {
     Gfx.loadtiles("spikes", 16, 16);
     Gfx.loadtiles("tileset", 16, 16);
     Gfx.loadtiles("indicators", 16, 16);
+    Gfx.loadtiles("dust", 8, 8);
 
     var level:Dynamic = Data.loadjson('level${Save.loadvalue("level")}.json');
     
@@ -134,7 +140,29 @@ class Game {
             this.player = new Raindrop.Entity(obj.x, obj.y);
             this.animate = new Raindrop.Animate(this.player, "spider", 0.1);
             this.entities.push(this.player);
-            this.crawl = new Raindrop.Crawl(this.player, this.grid, 0.25, [obj.properties.directionx, obj.properties.directiony], obj.properties.turn);
+
+            this.crawl = new Raindrop.Crawl(this.player, this.grid, 0.25, [obj.properties.directionx, obj.properties.directiony], obj.properties.turn,
+              function () {
+                Sound.play("jump");
+                var d = new Raindrop.Entity(this.player.x + this.player.w / 2, this.player.y + this.player.h / 2);
+                new Raindrop.Animate(d, "dust", 0.2, true);
+                this.entities.push(d);
+              },
+              function () {
+                Sound.play("land");
+                var normal = [Math.round(Geom.cos(this.player.angle - 90)), Math.round(Geom.sin(this.player.angle - 90))];
+
+                var d = new Raindrop.Entity(this.player.x + this.player.w / 2, this.player.y + this.player.h / 2);
+                new Raindrop.Animate(d, "dust", 0.2, true);
+                new Raindrop.Velocity(d, -normal[1] * 20, normal[0] * 20);
+                this.entities.push(d);
+
+                var d = new Raindrop.Entity(this.player.x + this.player.w / 2, this.player.y + this.player.h / 2);
+                new Raindrop.Animate(d, "dust", 0.2, true);
+                new Raindrop.Velocity(d, normal[1] * 20, -normal[0] * 20);
+                this.entities.push(d);
+              }
+            );
           } else if (obj.name == "Exit") {
             var e = new Raindrop.Entity(obj.x, obj.y);
             e.angle = obj.properties.angle;
@@ -189,10 +217,23 @@ class Game {
       }
     }
 
-    for (enemy in this.enemies) {
-      if (Geom.overlap(this.player.x + 2, this.player.y + 2, this.player.w - 4, this.player.h - 4, enemy.x + 2, enemy.y + 2, enemy.w - 4, enemy.h - 4)) {
-        Scene.change(Game);
-        break;
+    if (this.player.alive) {      
+      for (enemy in this.enemies) {
+        if (Geom.overlap(this.player.x + 2, this.player.y + 2, this.player.w - 4, this.player.h - 4, enemy.x + 2, enemy.y + 2, enemy.w - 4, enemy.h - 4)) {
+          this.player.alive = false;
+          for (i in 0...15) {
+            var d = new Raindrop.Entity(this.player.x, this.player.y);
+            var angle = Random.int(0, 360);
+            var speed = Random.int(10, 25);
+            new Raindrop.Velocity(d, Math.cos(angle) * speed, Math.sin(angle) * speed);
+            new Raindrop.Animate(d, "dust", 0.2, true);
+            this.entities.push(d);
+          }
+          Core.delaycall(function () {
+            Scene.change(Game);            
+          }, 1);
+          break;
+        }
       }
     }
 

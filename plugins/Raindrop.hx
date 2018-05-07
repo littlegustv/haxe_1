@@ -20,10 +20,13 @@ class Crawl extends Behavior {
   var interval:Float = 0.5;
   var start = new Array();
   var goal = new Array();
+  var jumping:Bool = false;
+  var onjump:Void->Void;
+  var onland:Void->Void;
   public var jump:Bool = false;
   public var pause:Bool = false;
 
-  public function new (entity, grid, interval, ?direction:Array<Int>, ?turn:Int = 1) {
+  public function new (entity, grid, interval, ?direction:Array<Int>, ?turn:Int = 1, ?onjump:Void->Void, ?onland:Void->Void) {
     super(entity);
     this.interval = interval;
     this.grid = grid;
@@ -33,6 +36,8 @@ class Crawl extends Behavior {
       this.direction = direction;      
     }
     this.turn = turn;
+    this.onjump = onjump;
+    this.onland = onland;
   }
 
   public function togrid(x:Float, y:Float) {
@@ -47,23 +52,31 @@ class Crawl extends Behavior {
       this.entity.x = this.goal[0];
       this.entity.y = this.goal[1];
       this.entity.angle = this.goal[2];
+      
+      if (this.jumping) {
+        this.jumping = false;
+        this.onland();
+      }
+
       if (this.pause) {
         // do nothing
         return;
       }
       
+      var normal = [Math.round(Geom.cos(this.entity.angle - 90)), Math.round(Geom.sin(this.entity.angle - 90))];
       this.start = [this.entity.x, this.entity.y, this.entity.angle];
       this.time = 0;      
       
       var g = this.togrid(this.entity.x, this.entity.y);
-      var normal = [Math.round(Geom.cos(this.entity.angle - 90)), Math.round(Geom.sin(this.entity.angle - 90))];
       
       if (this.jump) {
         for (i in 1...4) {
           if (this.grid[g[0] + normal[0] * i] != null && this.grid[g[0] + normal[0] * i][g[1] + normal[1] * i] != 0 && this.grid[g[0] + normal[0] * i][g[1] + normal[1] * i] != null) {
             // JUMP
             this.goal = [this.entity.x + (i - 1) * normal[0] * 16, this.entity.y + (i - 1) * normal[1] * 16, this.entity.angle + 180];
-            this.turn *= -1;            
+            this.turn *= -1;
+            this.jumping = true;            
+            this.onjump();
             break;
           }
         }
@@ -107,6 +120,7 @@ class Crawl extends Behavior {
         }
       }
       Gfx.drawtile(this.goal[0] + normal[0] * 16 - 8, this.goal[1] + normal[1] * 16 - 8, "indicators", 1);
+      Gfx.rotation(0);
     }
   }
 
@@ -217,13 +231,14 @@ class Animate extends Behavior {
 			this.frame = this.frame + 1;
 			if (this.frame >= this.frames) {
 				if (this.remove) this.entity.alive = false;
-				this.frame = this.frame % this.frames;
+        else this.frame = this.frame % this.frames;
 			} 
 		}
 	}
 	public override function draw () {
     Gfx.rotation(this.entity.angle, this.entity.w / 2, this.entity.h / 2);
 		Gfx.drawtile(Math.round(this.entity.x - this.entity.w / 2), Math.round(this.entity.y - this.entity.h / 2), this.sprite, this.frame);
+    Gfx.rotation(0);
 	}
   public function stop() {
     this.frame = 0;
@@ -265,8 +280,7 @@ class TileMap extends Behavior {
 		Gfx.drawtoscreen();
 	}
 	public override function draw () {
-		Gfx.rotation(0);
-    Gfx.drawimage(this.entity.x, this.entity.y, this.sprite);
+		Gfx.drawimage(this.entity.x, this.entity.y, this.sprite);
 	}
 }
 
@@ -292,14 +306,17 @@ class Tile extends Behavior {
 class Velocity extends Behavior {
 	public var x:Float;
 	public var y:Float;
-	public function new(entity, x, y) {
+  public var angle:Float;
+	public function new(entity, ?x:Float = 0, ?y:Float = 0, ?angle:Float = 0) {
 		super(entity);
 		this.x = x;
 		this.y = y;
+    this.angle = angle;
 	}
 	public override function update (dt:Float) {
 		this.entity.x += this.x * dt;
 		this.entity.y += this.y * dt;
+    this.entity.angle += this.angle * dt;
 	}
 	public override function draw () {}
 }
