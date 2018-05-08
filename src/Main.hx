@@ -4,7 +4,7 @@ TODO:
 x - remaining layer issues (fewer now!!)
 x- tilemap loading; more robust (get solid, object layers by 'name' instead of index)
 x- skippable death animation
- - somehow implement generic tweening function (any field, multiple transition functions)
+x- somehow implement generic tweening function (any field, multiple transition functions)
  - levels!
  - less wobbly camera, bound to game map size
 
@@ -248,9 +248,13 @@ class Game {
             new Raindrop.Animate(d, "dust", 0.2, true);
             this.entities.push(d);
           }
-          Core.delaycall(function () {
-            Scene.change(Game);            
-          }, 1);
+
+          var ragdoll = new Raindrop.Entity(this.player.x, this.player.y);
+          new Raindrop.Animate(ragdoll, "spider", 0.1);
+          new Raindrop.Tween(ragdoll, ["y", "angle"], [ragdoll.y + 160, ragdoll.angle + 720], "linear", 1, function () {
+            Scene.change(Game);
+          });
+          this.entities.push(ragdoll);
           break;
         }
       }
