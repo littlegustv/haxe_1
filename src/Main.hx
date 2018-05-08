@@ -22,9 +22,9 @@ class Menu {
     Sound.load("jump");
     Sound.load("land");
 
-    Text.setfont("titan", 12);
+    Text.setfont("sourcecode", 12);
     Text.align = Text.CENTER;
-    Gui.setfont("titan", 8);
+    Gui.setfont("sourcecode", 8);
     Gui.style.textcol = Col.BLACK;
     Gui.style.button = Col.WHITE;
     Gui.style.border = Col.WHITE;
@@ -33,6 +33,7 @@ class Menu {
     Gui.guisettings.buttonheight = 16;
     //Gfx.clearcolor = Col.BLACK;
     Layer.attach("bg");
+
   }
 
   function reset() {
@@ -49,7 +50,14 @@ class Menu {
   function update () {
     Layer.drawto("bg");
     Gfx.clearscreen(Col.BLACK);
-    Text.display(Gfx.screenwidth / 2, Gfx.screenheight / 2, "Arachno-Communist");
+
+    Text.setfont("sourcecode", 48);
+    Text.display(Gfx.screenwidth / 2, Gfx.screenheight / 2 - 36, "THE");
+
+    Text.setfont("sourcecode", 24);
+    Text.display(Gfx.screenwidth / 2, Gfx.screenheight / 2, "ARACHNO");
+    Text.setfont("sourcecode", 18);
+    Text.display(Gfx.screenwidth / 2, Gfx.screenheight / 2 + 16, "COMMUNIST");
     
     if (Gui.button("Level1!")) {
       Save.savevalue("level", 1);
@@ -258,7 +266,7 @@ class Game {
 
           var ragdoll = new Raindrop.Entity(this.player.x, this.player.y);
           new Raindrop.Animate(ragdoll, "spider", 0.1);
-          new Raindrop.Tween(ragdoll, ["y", "angle"], [ragdoll.y + 160, ragdoll.angle + 720], "linear", 1, function () {
+          new Raindrop.Tween(ragdoll, ["y", "angle"], [ragdoll.y + 320, ragdoll.angle + 720], "easeInQuad", 1, function () {
             Scene.change(Game);
           });
           this.entities.push(ragdoll);
