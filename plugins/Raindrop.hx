@@ -12,6 +12,68 @@ class Behavior {
 	}
 }
 
+
+class Tween extends Behavior {
+  var start:Array<Float> = [];
+  var goals:Array<Float> = [];
+  var fields:Array<String> = [];
+  var rate:Float = 1;
+  var time:Float = 0;
+  var ease:String;
+  var object:Dynamic;
+  var callback:Void->Void;
+  public function new(entity, fields:Array<String>, goals:Array<Float>, ?ease:String = "linear", ?rate:Float = 1, ?callback:Void->Void = null) {
+    super(entity);
+    this.fields = fields;
+    this.goals = goals;
+    this.rate = rate;
+    this.ease = ease;
+    this.callback = callback;
+    for (i in 0...this.fields.length) {
+      this.start.push(Reflect.field(this.entity, this.fields[i]));
+    }
+  }
+  public override function update(dt:Float) {
+    this.time += this.rate * dt;
+    if (this.time >= 1) {
+      for (i in 0...this.fields.length) {
+        Reflect.setField(this.entity, this.fields[i], this.goals[i]);
+      }
+      if (this.callback != null) {
+        this.callback();
+      }
+      this.entity.remove_behavior(this);
+    } else {
+      var t = Reflect.callMethod(this, Reflect.field(this, this.ease), [this.time]);
+      for (i in 0...this.fields.length) {
+        Reflect.setField(this.entity, this.fields[i], this.start[i] + t * (this.goals[i] - this.start[i]));
+      }
+    }
+
+  }
+  @:keep public function linear(t:Float) { return t; }
+  @:keep public function easeInQuad(t:Float) { return t*t; }
+  @:keep public function easeOutQuad (t:Float) { return t*(2-t); }
+  @:keep public function easeInOutQuad (t:Float) { return t<.5 ? 2*t*t : -1+(4-2*t)*t; }
+  @:keep public function easeInCubic (t:Float) { return t*t*t; }
+  @:keep public function easeOutCubic (t:Float) { return (--t)*t*t+1; }
+  @:keep public function easeInOutCubic (t:Float) { return t<.5 ? 4*t*t*t : (t-1)*(2*t-2)*(2*t-2)+1; }
+  @:keep public function easeInQuart (t:Float) { return t*t*t*t; }
+  @:keep public function easeOutQuart (t:Float) { return 1-(--t)*t*t*t; }
+  @:keep public function easeInOutQuart (t:Float) { return t<.5 ? 8*t*t*t*t : 1-8*(--t)*t*t*t; }
+  @:keep public function easeInQuint (t:Float) { return t*t*t*t*t; }
+  @:keep public function easeOutQuint (t:Float) { return 1+(--t)*t*t*t*t; }
+  @:keep public function easeInOutQuint (t:Float) { return t<.5 ? 16*t*t*t*t*t : 1+16*(--t)*t*t*t*t; }
+  @:keep public function easeInElastic (t:Float) { return (.04 - .04 / t) * Math.sin(25 * t) + 1; }
+  @:keep public function easeOutElastic (t:Float) { return .04 * t / (--t) * Math.sin(25 * t); }
+  @:keep public function easeInOutElastic (t:Float) { return (t -= .5) < 0 ? (.02 + .01 / t) * Math.sin(50 * t) : (.02 - .01 / t) * Math.sin(50 * t) + 1; }
+  @:keep public function easeInSin (t) { return 1 + Math.sin(Math.PI / 2 * t - Math.PI / 2);  }
+  @:keep public function easeOutSin (t) { return Math.sin(Math.PI / 2 * t); }
+  @:keep public function easeInOutSin (t) { return (1 + Math.sin(Math.PI * t - Math.PI / 2)) / 2; }
+}
+
+/* custom arachno specific behavior*/
+
 class Crawl extends Behavior {
   var grid:Array<Array<Int>>;
   var direction = [1, 0];
@@ -125,41 +187,8 @@ class Crawl extends Behavior {
   }
 
 }
-
-class Lerp extends Behavior {
-  var time:Float;
-  var rate:Float;
-  var x:Float;
-  var y:Float;
-  var callback:Raindrop.Entity->Void;
-  //var angle:Float;
-  var alpha:Float;
-  public function new (entity, rate:Float, ?x:Float, ?y:Float, ?alpha:Float, ?callback:Raindrop.Entity->Void) {
-    super(entity);
-    this.time = 0;
-    this.rate = rate;
-    this.x = if (x != null) x else this.entity.x;
-    this.y = if (y != null) y else this.entity.y;
-    this.alpha = if (alpha != null) alpha else this.entity.alpha;
-  }
-  public override function update(dt:Float) {
-    this.time += this.rate * dt;
-    if (this.time >= 1) {
-      this.entity.x = this.x;
-      this.entity.y = this.y;
-      this.entity.alpha = this.alpha;
-      this.entity.remove_behavior(this);
-      if (this.callback != null) this.callback(this.entity);
-    } else {
-      this.entity.x = this.lerp(this.entity.x, this.x, this.time);
-      this.entity.y = this.lerp(this.entity.y, this.y, this.time);
-      this.entity.alpha = this.lerp(this.entity.alpha, this.alpha, this.time);
-    }
-  }
-  private function lerp(start:Float, end:Float, time:Float) {
-    return (1 - time) * start + time * end;
-  }
-}
+/*
+custom 'batfax' specific behavior...
 
 class Beam extends Behavior {
 	var time:Float;
@@ -187,6 +216,8 @@ class Beam extends Behavior {
 		Gfx.fillbox(x, y, Gfx.screenwidth, h, Col.WHITE, this.time / this.interval);
 	}
 }
+
+*/
 
 class TextBox extends Behavior {
   var text:String;
@@ -237,7 +268,7 @@ class Animate extends Behavior {
 	}
 	public override function draw () {
     Gfx.rotation(this.entity.angle, this.entity.w / 2, this.entity.h / 2);
-		Gfx.drawtile(Math.round(this.entity.x - this.entity.w / 2), Math.round(this.entity.y - this.entity.h / 2), this.sprite, this.frame);
+    Gfx.drawtile(Math.round(this.entity.x - this.entity.w / 2), Math.round(this.entity.y - this.entity.h / 2), this.sprite, this.frame);
     Gfx.rotation(0);
 	}
   public function stop() {

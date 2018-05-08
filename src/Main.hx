@@ -163,6 +163,25 @@ class Game {
                 this.entities.push(d);
               }
             );
+            /*
+            
+            EASING DEMONSTRATION:
+            var eases = ["easeOutQuad", "easeInOutQuad", "easeInCubic", "easeOutCubic", "easeInOutCubic", "easeInSin", "easeOutSin", "easeInOutSin", "easeInElastic", "easeOutElastic", "easeInOutElastic", "easeInQuart", "easeOutQuart", "easeInOutQuart", "easeInQuint", "easeOutQuint", "easeInOutQuint"];
+            for (k in 0...eases.length) {
+              var n = new Raindrop.Entity(this.player.x + Gfx.screenwidth / 2 - k * 16, this.player.y - 128);
+              new Raindrop.Animate(n, "ghost", 0.5);
+              new Raindrop.Tween(n, ["y"], [this.player.y], eases[k], 0.25, function () {
+                n.alive = false;
+              });
+              this.entities.push(n);              
+            }
+
+             */
+            Layer.move(
+              "foreground", 
+              Gfx.screenwidth / 2 - this.player.x, 
+              Gfx.screenheight / 2 - this.player.y);
+
           } else if (obj.name == "Exit") {
             var e = new Raindrop.Entity(obj.x, obj.y);
             e.angle = obj.properties.angle;
