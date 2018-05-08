@@ -22,12 +22,15 @@ class Menu {
     Sound.load("jump");
     Sound.load("land");
 
-    Text.setfont("titan", 16);
+    Text.setfont("titan", 12);
     Text.align = Text.CENTER;
-    Gui.setfont("titan", 12);
-    Gui.style.button = Col.RED;
+    Gui.setfont("titan", 8);
+    Gui.style.textcol = Col.BLACK;
+    Gui.style.button = Col.WHITE;
     Gui.style.border = Col.WHITE;
     Gui.style.highlight = Col.PINK;
+    Gui.guisettings.buttonspacing = 0;
+    Gui.guisettings.buttonheight = 16;
     //Gfx.clearcolor = Col.BLACK;
     Layer.attach("bg");
   }
@@ -47,13 +50,17 @@ class Menu {
     Layer.drawto("bg");
     Gfx.clearscreen(Col.BLACK);
     Text.display(Gfx.screenwidth / 2, Gfx.screenheight / 2, "Arachno-Communist");
+    
     if (Gui.button("Level1!")) {
       Save.savevalue("level", 1);
       Scene.change(Game);
-    } else if (Gui.button("Level2!")) {
+    } 
+    Gui.shift();
+    if (Gui.button("Level2!")) {
       Save.savevalue("level", 2);
       Scene.change(Game);
-    } 
+    }
+
   }
 }
 
