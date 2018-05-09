@@ -20,6 +20,7 @@ class Menu {
   function init () {
     Music.play("music");
     Sound.load("jump");
+    Sound.load("die");
     Sound.load("land");
 
     Text.setfont("titan", 16);
@@ -58,6 +59,8 @@ class Menu {
 }
 
 class Game {
+  var grip:Float = 1;
+
   var entities = new Array();
   var enemies = new Array();
   var switches = new Array();
@@ -229,6 +232,7 @@ class Game {
             new Raindrop.Animate(d, "dust", 0.2, true);
             this.entities.push(d);
           }
+          Sound.play("die");
           Core.delaycall(function () {
             Scene.change(Game);            
           }, 1);
@@ -251,6 +255,8 @@ class Game {
       this.animate.stop();
     }
     if (this.crawl.pause) {
+      this.grip -= dt;
+
       if (Input.pressed(Key.SPACE)) {
 
       } else {
@@ -258,7 +264,7 @@ class Game {
         //Text.display(Gfx.screenwidth / 2, Gfx.screenheight / 2 + 24, "Jump!", Col.PINK, 0.6);
       }
 
-      if (Input.justreleased(Key.SPACE) || (Mouse.leftreleased() && Mouse.y >= Gfx.screenheight / 2)) {
+      if (this.grip <= 0 || Input.justreleased(Key.SPACE) || (Mouse.leftreleased() && Mouse.y >= Gfx.screenheight / 2)) {
         this.crawl.pause = false;
         this.crawl.jump = true;
         this.animate.resume();
@@ -267,7 +273,12 @@ class Game {
         this.crawl.pause = false;
         this.animate.resume();
       }
-    } 
+    } else {
+      this.grip = Math.min(1, this.grip + dt / 2);
+    }
+
+    Gfx.fillbox(0, Gfx.screenheight - 16, Gfx.screenwidth, 16, Col.WHITE);
+    Gfx.fillbox(2, Gfx.screenheight - 14, (Gfx.screenwidth - 4) * this.grip, 12, Col.BLACK);
     
 
     if (Gui.button("Menu")) {
