@@ -4,7 +4,7 @@ TODO:
 x - remaining layer issues (fewer now!!)
 x- tilemap loading; more robust (get solid, object layers by 'name' instead of index)
 x- skippable death animation
- - somehow implement generic tweening function (any field, multiple transition functions)
+x- somehow implement generic tweening function (any field, multiple transition functions)
  - levels!
  - less wobbly camera, bound to game map size
 
@@ -18,19 +18,23 @@ import haxegon.*;
 
 class Menu {
   function init () {
-    Music.play("music");
+    //Music.play("music");
     Sound.load("jump");
     Sound.load("die");
     Sound.load("land");
 
-    Text.setfont("titan", 16);
+    Text.setfont("sourcecode", 12);
     Text.align = Text.CENTER;
-    Gui.setfont("titan", 12);
-    Gui.style.button = Col.RED;
+    Gui.setfont("sourcecode", 8);
+    Gui.style.textcol = Col.BLACK;
+    Gui.style.button = Col.WHITE;
     Gui.style.border = Col.WHITE;
     Gui.style.highlight = Col.PINK;
+    Gui.guisettings.buttonspacing = 0;
+    Gui.guisettings.buttonheight = 16;
     //Gfx.clearcolor = Col.BLACK;
     Layer.attach("bg");
+
   }
 
   function reset() {
@@ -47,14 +51,25 @@ class Menu {
   function update () {
     Layer.drawto("bg");
     Gfx.clearscreen(Col.BLACK);
-    Text.display(Gfx.screenwidth / 2, Gfx.screenheight / 2, "Arachno-Communist");
+
+    Text.setfont("sourcecode", 48);
+    Text.display(Gfx.screenwidth / 2, Gfx.screenheight / 2 - 36, "THE");
+
+    Text.setfont("sourcecode", 24);
+    Text.display(Gfx.screenwidth / 2, Gfx.screenheight / 2, "ARACHNO");
+    Text.setfont("sourcecode", 18);
+    Text.display(Gfx.screenwidth / 2, Gfx.screenheight / 2 + 16, "COMMUNIST");
+    
     if (Gui.button("Level1!")) {
       Save.savevalue("level", 1);
       Scene.change(Game);
-    } else if (Gui.button("Level2!")) {
+    } 
+    Gui.shift();
+    if (Gui.button("Level2!")) {
       Save.savevalue("level", 2);
       Scene.change(Game);
-    } 
+    }
+
   }
 }
 
@@ -166,6 +181,25 @@ class Game {
                 this.entities.push(d);
               }
             );
+            /*
+            
+            EASING DEMONSTRATION:
+            var eases = ["easeOutQuad", "easeInOutQuad", "easeInCubic", "easeOutCubic", "easeInOutCubic", "easeInSin", "easeOutSin", "easeInOutSin", "easeInElastic", "easeOutElastic", "easeInOutElastic", "easeInQuart", "easeOutQuart", "easeInOutQuart", "easeInQuint", "easeOutQuint", "easeInOutQuint"];
+            for (k in 0...eases.length) {
+              var n = new Raindrop.Entity(this.player.x + Gfx.screenwidth / 2 - k * 16, this.player.y - 128);
+              new Raindrop.Animate(n, "ghost", 0.5);
+              new Raindrop.Tween(n, ["y"], [this.player.y], eases[k], 0.25, function () {
+                n.alive = false;
+              });
+              this.entities.push(n);              
+            }
+
+             */
+            Layer.move(
+              "foreground", 
+              Gfx.screenwidth / 2 - this.player.x, 
+              Gfx.screenheight / 2 - this.player.y);
+
           } else if (obj.name == "Exit") {
             var e = new Raindrop.Entity(obj.x, obj.y);
             e.angle = obj.properties.angle;
@@ -233,9 +267,12 @@ class Game {
             this.entities.push(d);
           }
           Sound.play("die");
-          Core.delaycall(function () {
-            Scene.change(Game);            
-          }, 1);
+          var ragdoll = new Raindrop.Entity(this.player.x, this.player.y);
+          new Raindrop.Animate(ragdoll, "spider", 0.1);
+          new Raindrop.Tween(ragdoll, ["y", "angle"], [ragdoll.y + 320, ragdoll.angle + 720], "easeInQuad", 1, function () {
+            Scene.change(Game);
+          });
+          this.entities.push(ragdoll);
           break;
         }
       }

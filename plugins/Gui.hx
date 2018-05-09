@@ -1320,7 +1320,7 @@ class Gui{
 	private static var guiprintcache:Map<String, GuiPrintCache>;
 	private static var tempprintcache:GuiPrintCache;
 	
-	private static var guisettings:GuiSettings;
+	public static var guisettings:GuiSettings;
 	public static var style:GuiStyle;
 	
 	//Delete me eventually, then delete everything that refers to me
