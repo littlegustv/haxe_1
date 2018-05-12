@@ -98,6 +98,8 @@ class Game {
     Gfx.clearcolor = Col.TRANSPARENT;
     
     Gfx.loadtiles("spider", 16, 16);
+    Gfx.loadtiles("spiderright", 16, 16);
+    Gfx.loadtiles("spiderleft", 16, 16);
     Gfx.loadtiles("ghost", 16, 16);
     Gfx.loadtiles("door", 16, 16);
     Gfx.loadtiles("tile", 16, 16);
@@ -156,7 +158,7 @@ class Game {
             this.enemies.push(e);
           } else if (obj.name == "Player") {
             this.player = new Raindrop.Entity(obj.x, obj.y);
-            this.animate = new Raindrop.Animate(this.player, "spider", 0.25);
+            this.animate = new Raindrop.Animate(this.player, "spiderright", 0.25);
             this.entities.push(this.player);
 
             this.crawl = new Raindrop.Crawl(this.player, this.grid, 0.25, [obj.properties.directionx, obj.properties.directiony], obj.properties.turn,
@@ -168,6 +170,13 @@ class Game {
               },
               function () {
                 Sound.play("land");
+                if (this.crawl.turn == 1) {
+                  trace('spiderright');
+                  this.animate.setsprite("spiderright");                  
+                } else {
+                  trace('spiderleft');
+                  this.animate.setsprite("spiderleft");                  
+                }
                 var normal = [Math.round(Geom.cos(this.player.angle - 90)), Math.round(Geom.sin(this.player.angle - 90))];
 
                 var d = new Raindrop.Entity(this.player.x + this.player.w / 2, this.player.y + this.player.h / 2);
@@ -179,6 +188,15 @@ class Game {
                 new Raindrop.Animate(d, "dust", 0.2, true);
                 new Raindrop.Velocity(d, normal[1] * 20, -normal[0] * 20);
                 this.entities.push(d);
+              },
+              function () {
+                if (this.crawl.turn == 1) {
+                  trace('spiderright');
+                  this.animate.setsprite("spiderright");                  
+                } else {
+                  trace('spiderleft');
+                  this.animate.setsprite("spiderleft");                  
+                }
               }
             );
             /*
@@ -288,10 +306,11 @@ class Game {
     Layer.drawto("ui");
 
     if (Input.justpressed(Key.SPACE) || Mouse.leftheld()) {
-      this.crawl.pause = true;
+      this.crawl.pause();
+      this.animate.setsprite("spider");
       //this.animate.stop();
     }
-    if (this.crawl.pause) {
+    if (this.crawl.paused) {
       
       if (Input.pressed(Key.SPACE)) {
 
@@ -301,12 +320,12 @@ class Game {
       }
 
       if (Input.justreleased(Key.SPACE) || (Mouse.leftreleased() && Mouse.y >= Gfx.screenheight / 2)) {
-        this.crawl.pause = false;
         this.crawl.jump = true;
+        this.crawl.resume();
         //this.animate.resume();
       }
       if (Input.justreleased(Key.ESCAPE) || (Mouse.leftreleased() && Mouse.y <= Gfx.screenheight / 2)) {
-        this.crawl.pause = false;
+        this.crawl.resume();
         //this.animate.resume();
       }
     } else {

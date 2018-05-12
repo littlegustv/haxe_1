@@ -77,7 +77,7 @@ class Tween extends Behavior {
 class Crawl extends Behavior {
   var grid:Array<Array<Int>>;
   var direction = [1, 0];
-  var turn:Int = 1;
+  public var turn:Int = 1;
   var time:Float = 0.0;
   var interval:Float = 0.5;
   var start = new Array();
@@ -85,10 +85,22 @@ class Crawl extends Behavior {
   var jumping:Bool = false;
   var onjump:Void->Void;
   var onland:Void->Void;
+  var oncancel:Void->Void;
   public var jump:Bool = false;
-  public var pause:Bool = false;
+  public var paused:Bool = false;
 
-  public function new (entity, grid, interval, ?direction:Array<Int>, ?turn:Int = 1, ?onjump:Void->Void, ?onland:Void->Void) {
+  public function pause () {
+    this.paused = true;
+  }
+
+  public function resume () {
+    this.paused = false;
+    if (!this.jump) {
+      this.oncancel();
+    }
+  }
+
+  public function new (entity, grid, interval, ?direction:Array<Int>, ?turn:Int = 1, ?onjump:Void->Void, ?onland:Void->Void, ?oncancel:Void->Void) {
     super(entity);
     this.interval = interval;
     this.grid = grid;
@@ -100,6 +112,7 @@ class Crawl extends Behavior {
     this.turn = turn;
     this.onjump = onjump;
     this.onland = onland;
+    this.oncancel = oncancel;
   }
 
   public function togrid(x:Float, y:Float) {
@@ -120,7 +133,7 @@ class Crawl extends Behavior {
         this.onland();
       }
 
-      if (this.pause) {
+      if (this.paused) {
         // do nothing
         return;
       }
@@ -143,6 +156,10 @@ class Crawl extends Behavior {
           }
         }
         this.jump = false;
+        if (!this.jumping) {
+          this.oncancel();
+          this.time = this.interval + 1;
+        }
       } else if (this.grid[g[0] + this.direction[0]] != null && this.grid[g[0] + this.direction[0]][g[1] + this.direction[1]] == 0) {
         if (this.grid[g[0] + this.direction[0] - normal[0]] != null && this.grid[g[0] + this.direction[0] - normal[0]][g[1] + this.direction[1] - normal[1]] != 0) {
           // FLAT
@@ -169,7 +186,7 @@ class Crawl extends Behavior {
   }
 
   public override function draw () {
-    if (this.pause) {
+    if (this.paused) {
       var g = this.togrid(this.goal[0], this.goal[1]);
       var normal = [Math.round(Geom.cos(this.goal[2] - 90)), Math.round(Geom.sin(this.goal[2] - 90))];
       for (i in 1...4) {
