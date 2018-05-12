@@ -246,7 +246,11 @@ class Animate extends Behavior {
 	var remove:Bool;
   var frame:Int = 0;
   var paused:Bool = false;
+  var flipped:Bool = false;
   public var sprite:String;
+  public function flip () {
+    this.flipped = !this.flipped;
+  }
 	public function new (entity, sprite, speed, remove:Bool = false) {
 		super(entity);
 		this.sprite = sprite;
@@ -281,6 +285,13 @@ class Animate extends Behavior {
   }
   public function pause () {
     this.paused = true;
+  }
+  public function setsprite (sprite:String, ?restart:Bool = false) {
+    this.sprite = sprite;
+    this.frames = Gfx.numberoftiles(sprite);
+    if (restart) {
+      this.frame = 0;
+    }
   }
 }
 

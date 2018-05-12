@@ -97,7 +97,7 @@ class Game {
     // fix me: seem to need to manually clear (using 'fillbox') per-layer, but that lets previous scenes bleed through?
     Gfx.clearcolor = Col.TRANSPARENT;
     
-    Gfx.loadtiles("spider", 18, 16);
+    Gfx.loadtiles("spider", 16, 16);
     Gfx.loadtiles("ghost", 16, 16);
     Gfx.loadtiles("door", 16, 16);
     Gfx.loadtiles("tile", 16, 16);
@@ -156,7 +156,7 @@ class Game {
             this.enemies.push(e);
           } else if (obj.name == "Player") {
             this.player = new Raindrop.Entity(obj.x, obj.y);
-            this.animate = new Raindrop.Animate(this.player, "spider", 0.1);
+            this.animate = new Raindrop.Animate(this.player, "spider", 0.25);
             this.entities.push(this.player);
 
             this.crawl = new Raindrop.Crawl(this.player, this.grid, 0.25, [obj.properties.directionx, obj.properties.directiony], obj.properties.turn,
@@ -289,11 +289,10 @@ class Game {
 
     if (Input.justpressed(Key.SPACE) || Mouse.leftheld()) {
       this.crawl.pause = true;
-      this.animate.stop();
+      //this.animate.stop();
     }
     if (this.crawl.pause) {
-      this.grip -= dt;
-
+      
       if (Input.pressed(Key.SPACE)) {
 
       } else {
@@ -301,22 +300,18 @@ class Game {
         //Text.display(Gfx.screenwidth / 2, Gfx.screenheight / 2 + 24, "Jump!", Col.PINK, 0.6);
       }
 
-      if (this.grip <= 0 || Input.justreleased(Key.SPACE) || (Mouse.leftreleased() && Mouse.y >= Gfx.screenheight / 2)) {
+      if (Input.justreleased(Key.SPACE) || (Mouse.leftreleased() && Mouse.y >= Gfx.screenheight / 2)) {
         this.crawl.pause = false;
         this.crawl.jump = true;
-        this.animate.resume();
+        //this.animate.resume();
       }
       if (Input.justreleased(Key.ESCAPE) || (Mouse.leftreleased() && Mouse.y <= Gfx.screenheight / 2)) {
         this.crawl.pause = false;
-        this.animate.resume();
+        //this.animate.resume();
       }
     } else {
-      this.grip = Math.min(1, this.grip + dt / 2);
+      //this.grip = Math.min(1, this.grip + dt / 2);
     }
-
-    Gfx.fillbox(0, Gfx.screenheight - 16, Gfx.screenwidth, 16, Col.WHITE);
-    Gfx.fillbox(2, Gfx.screenheight - 14, (Gfx.screenwidth - 4) * this.grip, 12, Col.BLACK);
-    
 
     if (Gui.button("Menu")) {
       Scene.change(Menu);
