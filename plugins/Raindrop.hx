@@ -75,7 +75,7 @@ class Tween extends Behavior {
 /* custom arachno specific behavior*/
 
 class Crawl extends Behavior {
-  var grid:Array<Array<Int>>;
+  var grid:Array<Array<Null<Int>>>;
   var direction = [1, 0];
   public var turn:Int = 1;
   var time:Float = 0.0;
