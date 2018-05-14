@@ -158,7 +158,7 @@ class Game {
             this.enemies.push(e);
           } else if (obj.name == "Player") {
             this.player = new Raindrop.Entity(obj.x, obj.y);
-            this.animate = new Raindrop.Animate(this.player, "spiderright", 0.25);
+            this.animate = new Raindrop.Animate(this.player, "spiderright", 0.1);
             this.entities.push(this.player);
 
             this.crawl = new Raindrop.Crawl(this.player, this.grid, 0.25, [obj.properties.directionx, obj.properties.directiony], obj.properties.turn,
