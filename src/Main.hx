@@ -134,25 +134,43 @@ class Game {
           for (j in 0...height) {
             var cell = level.layers[n].data[i + j * width];
             row.push(cell);
-            if (cell != 0) {
+            //if (cell != 0) {
               //trace(i, j, i + j * width);
-              var tile = new Raindrop.Entity(i * 16, j * 16);
-              new Raindrop.Animate(tile, "tile", 1);
-              this.entities.push(tile);
-            }
+              //var tile = new Raindrop.Entity(i * 16, j * 16);
+              //new Raindrop.Animate(tile, "tile", 1);
+              //this.entities.push(tile);
+            //}
           }
         }
-      } else if (level.layers[n].name == "Objects") {
+      }
+
+      if (level.layers[n].name == "Objects") {
         for (i in 0...level.layers[n].objects.length) {
           var obj:Dynamic = level.layers[n].objects[i];
           if (obj.name == "Enemy") {
             var e = new Raindrop.Entity(obj.x, obj.y);
-            e.angle = obj.properties.angle;
-            if (obj.properties.directionx != null && obj.properties.directiony != null && obj.properties.turn != null) {
-              new Raindrop.Crawl(e, this.grid, 0.5, [obj.properties.directionx, obj.properties.directiony], obj.properties.turn);          
-              new Raindrop.Animate(e, "ghost", 0.1);
-            } else {
+            if (obj.properties.move == "crawl") {              
+              e.angle = obj.properties.angle;
+              if (obj.properties.directionx != null && obj.properties.directiony != null && obj.properties.turn != null) {
+                new Raindrop.Crawl(e, this.grid, 0.5, [obj.properties.directionx, obj.properties.directiony], obj.properties.turn);          
+                new Raindrop.Animate(e, "ghost", 0.1);
+              }
+            } else if (obj.properties.move == null) {
               new Raindrop.Animate(e, "spikes", 0.4);
+            } else if (obj.properties.move == "patrol") {
+              new Raindrop.Animate(e, "ghost", 0.1);
+              var sx:Float = e.x;
+              var gx:Float = obj.properties.goalx;
+              var sy:Float = e.y;
+              var gy:Float = obj.properties.goaly;
+              var unreverse:Void->Void;
+              var reverse = function () {
+                new Raindrop.Tween(e, ["x", "y"], [gx, gy], "linear", 0.1, unreverse);
+              };
+              unreverse = function () {
+                new Raindrop.Tween(e, ["x", "y"], [sx, sy], "linear", 0.1, reverse);                
+              };
+              reverse();              
             }
             this.entities.push(e);
             this.enemies.push(e);
@@ -229,7 +247,7 @@ class Game {
       } else {
         var e = new Raindrop.Entity(-4, -4);
         new Raindrop.TileMap(e, level.layers[n], "tileset", level.layers[n].name);
-        this.entities.unshift(e);
+        this.entities.push(e);
       }
     }
 
